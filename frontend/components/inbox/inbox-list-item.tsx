@@ -1,7 +1,5 @@
 "use client"
 
-import { Card } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { 
   MoreHorizontal, 
@@ -9,9 +7,6 @@ import {
   Trash2, 
   Loader2, 
   QrCode,
-  Phone,
-  Bot,
-  Send
 } from "lucide-react"
 import {
   DropdownMenu,
@@ -22,8 +17,9 @@ import {
 } from "@/components/ui/dropdown-menu"
 import type { Inbox } from "@/lib/api/types"
 import { cn } from "@/lib/utils"
+import { channelConfig, statusConfig } from "./inbox-card"
 
-interface InboxCardProps {
+interface InboxListItemProps {
   inbox: Inbox
   onConnect?: () => void
   onDisconnect?: () => void
@@ -32,45 +28,14 @@ interface InboxCardProps {
   isLoading?: boolean
 }
 
-export const channelConfig = {
-  whatsapp: { 
-    label: "WhatsApp", 
-    color: "bg-green-500",
-    textColor: "text-green-600",
-    bgLight: "bg-green-100",
-    icon: Phone,
-  },
-  telegram: { 
-    label: "Telegram", 
-    color: "bg-blue-500",
-    textColor: "text-blue-600",
-    bgLight: "bg-blue-100",
-    icon: Send,
-  },
-  api: { 
-    label: "API", 
-    color: "bg-purple-500",
-    textColor: "text-purple-600",
-    bgLight: "bg-purple-100",
-    icon: Bot,
-  },
-}
-
-export const statusConfig = {
-  connected: { label: "Conectado", color: "bg-green-500" },
-  disconnected: { label: "Desconectado", color: "bg-gray-400" },
-  connecting: { label: "Conectando", color: "bg-blue-500" },
-  qr_code: { label: "Aguardando", color: "bg-orange-500" },
-}
-
-export function InboxCard({
+export function InboxListItem({
   inbox,
   onConnect,
   onDisconnect,
   onDelete,
   onShowQR,
   isLoading,
-}: InboxCardProps) {
+}: InboxListItemProps) {
   const channel = channelConfig[inbox.channel_type] || channelConfig.whatsapp
   const status = statusConfig[inbox.status] || statusConfig.disconnected
   const ChannelIcon = channel.icon
@@ -88,18 +53,32 @@ export function InboxCard({
   }
 
   return (
-    <Card className="p-4 hover:shadow-md transition-shadow">
-      <div className="flex items-start justify-between">
-        <div className="flex items-center gap-3">
-          <div className={cn("p-2.5 rounded-lg", channel.bgLight)}>
-            <ChannelIcon className={cn("h-5 w-5", channel.textColor)} />
-          </div>
-          <div>
-            <h3 className="font-medium">{inbox.name}</h3>
-            <p className="text-sm text-muted-foreground">{channel.label}</p>
-          </div>
+    <div className="flex items-center justify-between p-3 rounded-lg border hover:bg-muted/50 transition-colors">
+      <div className="flex items-center gap-3">
+        <div className={cn("p-2 rounded-lg", channel.bgLight)}>
+          <ChannelIcon className={cn("h-4 w-4", channel.textColor)} />
         </div>
-        
+        <div>
+          <h3 className="font-medium text-sm">{inbox.name}</h3>
+          <p className="text-xs text-muted-foreground">{channel.label}</p>
+        </div>
+      </div>
+
+      <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2">
+          <span className={cn("h-2 w-2 rounded-full", status.color)} />
+          <span className="text-sm text-muted-foreground">
+            {isConnecting && <Loader2 className="h-3 w-3 animate-spin inline mr-1" />}
+            {status.label}
+          </span>
+        </div>
+
+        {canConnect && needsQR && (
+          <Button onClick={handleConnect} size="sm" variant="ghost" disabled={isLoading}>
+            <QrCode className="h-4 w-4" />
+          </Button>
+        )}
+
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="icon" className="h-8 w-8" disabled={isLoading}>
@@ -127,22 +106,6 @@ export function InboxCard({
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
-
-      <div className="mt-4 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <span className={cn("h-2 w-2 rounded-full", status.color)} />
-          <span className="text-sm text-muted-foreground">
-            {isConnecting && <Loader2 className="h-3 w-3 animate-spin inline mr-1" />}
-            {status.label}
-          </span>
-        </div>
-        
-        {canConnect && needsQR && (
-          <Button onClick={handleConnect} size="sm" variant="outline" disabled={isLoading}>
-            {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <QrCode className="h-4 w-4" />}
-          </Button>
-        )}
-      </div>
-    </Card>
+    </div>
   )
 }
