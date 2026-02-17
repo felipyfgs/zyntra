@@ -25,8 +25,6 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar"
 import { 
-  Phone, 
-  Send, 
   Bot, 
   Mail, 
   Globe, 
@@ -39,6 +37,7 @@ import {
   Cloud,
   ExternalLink
 } from "lucide-react"
+import { SiWhatsapp, SiTelegram } from "@icons-pack/react-simple-icons"
 import { cn } from "@/lib/utils"
 import { useCreateInbox } from "@/lib/api/hooks"
 
@@ -55,11 +54,11 @@ interface Channel {
 
 const channels: Channel[] = [
   { type: "website", name: "Site", description: "Criar um widget de chat ao vivo", icon: Globe, available: false },
-  { type: "whatsapp", name: "WhatsApp", description: "Atenda seus clientes no WhatsApp", icon: Phone, available: true },
+  { type: "whatsapp", name: "WhatsApp", description: "Atenda seus clientes no WhatsApp", icon: SiWhatsapp, available: true },
   { type: "sms", name: "SMS", description: "Integrar o canal SMS com Twilio", icon: MessageSquare, available: false },
   { type: "email", name: "E-Mail", description: "Conectar com Gmail, Outlook", icon: Mail, available: false },
   { type: "api", name: "API", description: "Crie um canal usando nossa API", icon: Bot, available: true },
-  { type: "telegram", name: "Telegram", description: "Configure usando o token do bot", icon: Send, available: true },
+  { type: "telegram", name: "Telegram", description: "Configure usando o token do bot", icon: SiTelegram, available: true },
 ]
 
 const steps = [

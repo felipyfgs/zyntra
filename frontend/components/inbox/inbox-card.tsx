@@ -9,10 +9,9 @@ import {
   Trash2, 
   Loader2, 
   QrCode,
-  Phone,
   Bot,
-  Send
 } from "lucide-react"
+import { SiWhatsapp, SiTelegram } from "@icons-pack/react-simple-icons"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -35,22 +34,19 @@ interface InboxCardProps {
 export const channelConfig = {
   whatsapp: { 
     label: "WhatsApp", 
-    color: "bg-green-500",
-    textColor: "text-green-600",
+    brandColor: "#25D366",
     bgLight: "bg-green-100",
-    icon: Phone,
+    icon: SiWhatsapp,
   },
   telegram: { 
     label: "Telegram", 
-    color: "bg-blue-500",
-    textColor: "text-blue-600",
+    brandColor: "#26A5E4",
     bgLight: "bg-blue-100",
-    icon: Send,
+    icon: SiTelegram,
   },
   api: { 
     label: "API", 
-    color: "bg-purple-500",
-    textColor: "text-purple-600",
+    brandColor: "#8B5CF6",
     bgLight: "bg-purple-100",
     icon: Bot,
   },
@@ -92,7 +88,7 @@ export function InboxCard({
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-3">
           <div className={cn("p-2.5 rounded-lg", channel.bgLight)}>
-            <ChannelIcon className={cn("h-5 w-5", channel.textColor)} />
+            <ChannelIcon className="h-5 w-5" color={channel.brandColor} />
           </div>
           <div>
             <h3 className="font-medium">{inbox.name}</h3>

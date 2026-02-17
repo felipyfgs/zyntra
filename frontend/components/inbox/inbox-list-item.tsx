@@ -56,7 +56,7 @@ export function InboxListItem({
     <div className="flex items-center justify-between p-3 rounded-lg border hover:bg-muted/50 transition-colors">
       <div className="flex items-center gap-3">
         <div className={cn("p-2 rounded-lg", channel.bgLight)}>
-          <ChannelIcon className={cn("h-4 w-4", channel.textColor)} />
+          <ChannelIcon className="h-4 w-4" color={channel.brandColor} />
         </div>
         <div>
           <h3 className="font-medium text-sm">{inbox.name}</h3>
