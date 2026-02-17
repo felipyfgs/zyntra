@@ -40,7 +40,7 @@ export const channelConfig = {
   },
   telegram: { 
     label: "Telegram", 
-    brandColor: "#26A5E4",
+    brandColor: "#0088CC",
     bgLight: "bg-blue-100",
     icon: SiTelegram,
   },
