@@ -62,42 +62,10 @@ function getInitials(name: string): string {
     .slice(0, 2)
 }
 
-const mockMessages: ChatMessage[] = [
-  {
-    id: "1",
-    content: "Ola! Como voce esta?",
-    sender: "other",
-    timestamp: new Date(Date.now() - 1000 * 60 * 10),
-  },
-  {
-    id: "2",
-    content: "Oi! Estou bem, e voce?",
-    sender: "user",
-    timestamp: new Date(Date.now() - 1000 * 60 * 9),
-  },
-  {
-    id: "3",
-    content: "Tudo otimo! Voce viu o novo projeto que estamos desenvolvendo?",
-    sender: "other",
-    timestamp: new Date(Date.now() - 1000 * 60 * 8),
-  },
-  {
-    id: "4",
-    content: "Ainda nao, mas estou curioso para saber mais!",
-    sender: "user",
-    timestamp: new Date(Date.now() - 1000 * 60 * 7),
-  },
-  {
-    id: "5",
-    content:
-      "E um sistema de chat muito legal com **Markdown** suporte e varias funcionalidades:\n\n- Auto-scroll\n- Mensagens em tempo real\n- Interface responsiva\n\nO que voce acha?",
-    sender: "other",
-    timestamp: new Date(Date.now() - 1000 * 60 * 5),
-  },
-]
+
 
 export function ChatArea({ chat, connectionId, onBack }: ChatAreaProps) {
-  const [localMessages, setLocalMessages] = useState<ChatMessage[]>(mockMessages)
+  const [pendingMessages, setPendingMessages] = useState<ChatMessage[]>([])
   const [copiedId, setCopiedId] = useState<string | null>(null)
 
   // Fetch messages from API
@@ -116,18 +84,20 @@ export function ChatArea({ chat, connectionId, onBack }: ChatAreaProps) {
     }
   }, [newNatsMessage, chat.id, addMessageToCache])
 
-  // Combine API messages with local fallback
+  // Combine API messages with pending (optimistic) messages
   const messages = useMemo(() => {
-    if (apiData?.messages && apiData.messages.length > 0) {
-      return apiData.messages.map(mapAPIMessage)
-    }
-    return localMessages
-  }, [apiData, localMessages])
+    const apiMessages = apiData?.messages?.map(mapAPIMessage) || []
+    // Filter out pending messages that now exist in API data
+    const stillPending = pendingMessages.filter(
+      (pm) => !apiMessages.some((am) => am.id === pm.id || am.content === pm.content)
+    )
+    return [...apiMessages, ...stillPending]
+  }, [apiData, pendingMessages])
 
   const handleSend = async (message: { text: string }) => {
     if (!message.text.trim()) return
 
-    // Optimistic update with local message
+    // Optimistic update with pending message
     const tempId = `temp-${Date.now()}`
     const newMessage: ChatMessage = {
       id: tempId,
@@ -136,7 +106,7 @@ export function ChatArea({ chat, connectionId, onBack }: ChatAreaProps) {
       timestamp: new Date(),
       status: "pending",
     }
-    setLocalMessages((prev) => [...prev, newMessage])
+    setPendingMessages((prev) => [...prev, newMessage])
 
     try {
       await sendMessageMutation.mutateAsync({
@@ -202,32 +172,43 @@ export function ChatArea({ chat, connectionId, onBack }: ChatAreaProps) {
       {/* Messages */}
       <Conversation className="min-h-0 flex-1 overflow-hidden">
         <ConversationContent className="gap-4 p-4">
-          {messages.map((message) => (
-            <Message
-              key={message.id}
-              from={message.sender === "user" ? "user" : "assistant"}
-            >
-              <MessageContent>
-                {message.sender === "other" ? (
-                  <MessageResponse>{message.content}</MessageResponse>
-                ) : (
-                  <p>{message.content}</p>
-                )}
-              </MessageContent>
-              <MessageActions className="opacity-0 transition-opacity group-hover:opacity-100">
-                <MessageAction
-                  tooltip={copiedId === message.id ? "Copiado!" : "Copiar"}
-                  onClick={() => handleCopy(message.content, message.id)}
-                >
-                  {copiedId === message.id ? (
-                    <Check className="h-4 w-4" />
+          {isLoading ? (
+            <div className="flex h-full items-center justify-center">
+              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            </div>
+          ) : messages.length === 0 ? (
+            <div className="flex h-full flex-col items-center justify-center gap-2 text-muted-foreground">
+              <p className="text-sm">Nenhuma mensagem ainda</p>
+              <p className="text-xs">Envie uma mensagem para iniciar a conversa</p>
+            </div>
+          ) : (
+            messages.map((message, index) => (
+              <Message
+                key={message.id || `msg-${index}`}
+                from={message.sender === "user" ? "user" : "assistant"}
+              >
+                <MessageContent>
+                  {message.sender === "other" ? (
+                    <MessageResponse>{message.content}</MessageResponse>
                   ) : (
-                    <Copy className="h-4 w-4" />
+                    <p>{message.content}</p>
                   )}
-                </MessageAction>
-              </MessageActions>
-            </Message>
-          ))}
+                </MessageContent>
+                <MessageActions className="opacity-0 transition-opacity group-hover:opacity-100">
+                  <MessageAction
+                    tooltip={copiedId === message.id ? "Copiado!" : "Copiar"}
+                    onClick={() => handleCopy(message.content, message.id)}
+                  >
+                    {copiedId === message.id ? (
+                      <Check className="h-4 w-4" />
+                    ) : (
+                      <Copy className="h-4 w-4" />
+                    )}
+                  </MessageAction>
+                </MessageActions>
+              </Message>
+            ))
+          )}
         </ConversationContent>
         <ConversationScrollButton />
       </Conversation>

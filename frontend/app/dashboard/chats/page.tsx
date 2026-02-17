@@ -35,75 +35,24 @@ import { cn } from "@/lib/utils"
 import { useChats } from "@/lib/api/hooks"
 import type { Chat as APIChat, ChatFilter } from "@/lib/api/types"
 
-// Mock data for development/fallback
-const mockChats: Chat[] = [
-  {
-    id: "1",
-    name: "Maria Silva",
-    avatar: "/avatars/shadcn.jpg",
-    lastMessage: "Ola, tudo bem?",
-    timestamp: new Date(Date.now() - 1000 * 60 * 5),
-    unreadCount: 2,
-    isOnline: true,
-    isWaiting: true,
-  },
-  {
-    id: "2",
-    name: "Joao Santos",
-    lastMessage: "Vamos marcar uma reuniao?",
-    timestamp: new Date(Date.now() - 1000 * 60 * 30),
-    isOnline: false,
-    isFavorite: true,
-  },
-  {
-    id: "3",
-    name: "Ana Costa",
-    lastMessage: "Obrigada pela ajuda!",
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2),
-    isOnline: true,
-    hasMedia: true,
-  },
-  {
-    id: "4",
-    name: "Pedro Oliveira",
-    lastMessage: "O projeto esta quase pronto",
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24),
-    unreadCount: 5,
-    isOnline: false,
-    isWaiting: true,
-  },
-  {
-    id: "5",
-    name: "Equipe de Vendas",
-    lastMessage: "Reuniao amanha as 10h",
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 3),
-    isGroup: true,
-    unreadCount: 12,
-  },
-  {
-    id: "6",
-    name: "Suporte Tecnico",
-    lastMessage: "Ticket #1234 resolvido",
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 5),
-    isGroup: true,
-    isOnline: true,
-  },
-]
+// Extended Chat type with connectionId for NATS
+type ChatWithConnection = Chat & { connectionId?: string }
 
 // Convert API Chat to local Chat type
-function mapAPIChat(apiChat: APIChat): Chat {
+function mapAPIChat(apiChat: APIChat): ChatWithConnection {
   return {
     id: apiChat.id,
+    connectionId: apiChat.connection_id,
     name: apiChat.name,
     avatar: apiChat.avatar_url,
     lastMessage: apiChat.last_message || "",
     timestamp: apiChat.last_message_at ? new Date(apiChat.last_message_at) : new Date(apiChat.created_at),
     unreadCount: apiChat.unread_count,
-    isOnline: false, // TODO: Get from presence
+    isOnline: false,
     isGroup: apiChat.is_group,
     isFavorite: apiChat.is_favorite,
-    hasMedia: false, // TODO: Detect from last message
-    isWaiting: false, // TODO: Implement waiting status
+    hasMedia: false,
+    isWaiting: false,
   }
 }
 
@@ -112,7 +61,7 @@ function generateId() {
 }
 
 export default function ChatsPage() {
-  const [selectedChat, setSelectedChat] = useState<Chat | null>(null)
+  const [selectedChat, setSelectedChat] = useState<ChatWithConnection | null>(null)
   const [showChatArea, setShowChatArea] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
   const [allFilters, setAllFilters] = useState<FilterItem[]>([...DEFAULT_FILTERS])
@@ -123,7 +72,6 @@ export default function ChatsPage() {
   const [manageFiltersOpen, setManageFiltersOpen] = useState(false)
   const [editingFilter, setEditingFilter] = useState<FilterItem | null>(null)
   const [newChatNumber, setNewChatNumber] = useState("")
-  const [localChats, setLocalChats] = useState<Chat[]>(mockChats)
 
   // API filter based on active filter
   const apiFilter = useMemo((): ChatFilter => {
@@ -145,25 +93,22 @@ export default function ChatsPage() {
   }, [searchQuery, activeFilterId, allFilters])
 
   // Fetch chats from API
-  const { data: apiData, isLoading, isError } = useChats(apiFilter)
+  const { data: apiData, isLoading } = useChats(apiFilter)
 
-  // Use API data if available, otherwise use local mock data
-  const chats = useMemo(() => {
-    if (apiData?.chats && apiData.chats.length > 0) {
+  // Use API data directly - no mock fallback
+  const chats = useMemo((): ChatWithConnection[] => {
+    if (apiData?.chats) {
       return apiData.chats.map(mapAPIChat)
     }
-    return localChats
-  }, [apiData, localChats])
-
-  // Setter for local chats (used for new chat creation)
-  const setChats = setLocalChats
+    return []
+  }, [apiData])
 
   const activeFilter = useMemo(
     () => allFilters.find((f) => f.id === activeFilterId),
     [allFilters, activeFilterId]
   )
 
-  const handleSelectChat = (chat: Chat) => {
+  const handleSelectChat = (chat: ChatWithConnection) => {
     setSelectedChat(chat)
     setShowChatArea(true)
   }
@@ -293,18 +238,8 @@ export default function ChatsPage() {
 
   const handleStartNewChat = () => {
     if (!newChatNumber.trim()) return
-
-    const newChat: Chat = {
-      id: Date.now().toString(),
-      name: newChatNumber,
-      lastMessage: "",
-      timestamp: new Date(),
-      isOnline: false,
-    }
-
-    setChats([newChat, ...chats])
-    setSelectedChat(newChat)
-    setShowChatArea(true)
+    // TODO: Implement new chat creation via API
+    // For now, just clear the input - new chats should be created through the backend
     setNewChatNumber("")
   }
 
@@ -458,11 +393,22 @@ export default function ChatsPage() {
             />
 
             {/* Chat List */}
-            <ChatList
-              chats={filteredChats}
-              selectedId={selectedChat?.id}
-              onSelect={handleSelectChat}
-            />
+            {isLoading ? (
+              <div className="flex flex-1 items-center justify-center">
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+              </div>
+            ) : filteredChats.length === 0 ? (
+              <div className="flex flex-1 flex-col items-center justify-center gap-2 text-muted-foreground p-4">
+                <MessageSquare className="h-8 w-8" />
+                <p className="text-sm text-center">Nenhuma conversa encontrada</p>
+              </div>
+            ) : (
+              <ChatList
+                chats={filteredChats}
+                selectedId={selectedChat?.id}
+                onSelect={handleSelectChat}
+              />
+            )}
 
             {/* New Chat Input */}
             <div className="shrink-0 border-t p-3">
@@ -493,7 +439,7 @@ export default function ChatsPage() {
             !showChatArea && "hidden md:flex"
           )}>
             {selectedChat ? (
-              <ChatArea chat={selectedChat} onBack={handleBack} />
+              <ChatArea chat={selectedChat} connectionId={selectedChat.connectionId} onBack={handleBack} />
             ) : (
               <div className="flex h-full flex-col items-center justify-center gap-4 text-muted-foreground">
                 <MessageSquare className="h-12 w-12" />
