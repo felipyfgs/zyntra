@@ -7,6 +7,7 @@ import { InboxCard } from "@/components/inbox/inbox-card"
 import { InboxListItem } from "@/components/inbox/inbox-list-item"
 import { QRCodeDialog } from "@/components/inbox/qr-code-dialog"
 import { Button } from "@/components/ui/button"
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -20,7 +21,6 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar"
 import { Plus, Inbox, Loader2, LayoutGrid, List } from "lucide-react"
-import { cn } from "@/lib/utils"
 import {
   useInboxes,
   useDeleteInbox,
@@ -43,9 +43,11 @@ export default function InboxesPage() {
     }
   }, [])
 
-  const handleViewChange = (mode: ViewMode) => {
-    setViewMode(mode)
-    localStorage.setItem("inboxes-view-mode", mode)
+  const handleViewChange = (value: string) => {
+    if (value === "grid" || value === "list") {
+      setViewMode(value)
+      localStorage.setItem("inboxes-view-mode", value)
+    }
   }
 
   const { data: inboxes, isLoading } = useInboxes()
@@ -99,25 +101,14 @@ export default function InboxesPage() {
               <p className="text-muted-foreground">Gerencie seus canais de atendimento</p>
             </div>
             <div className="flex items-center gap-2">
-              {/* View Toggle */}
-              <div className="flex items-center border rounded-lg p-1">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className={cn("h-8 w-8 p-0", viewMode === "grid" && "bg-muted")}
-                  onClick={() => handleViewChange("grid")}
-                >
+              <ToggleGroup type="single" value={viewMode} onValueChange={handleViewChange}>
+                <ToggleGroupItem value="grid" aria-label="Grid view">
                   <LayoutGrid className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className={cn("h-8 w-8 p-0", viewMode === "list" && "bg-muted")}
-                  onClick={() => handleViewChange("list")}
-                >
+                </ToggleGroupItem>
+                <ToggleGroupItem value="list" aria-label="List view">
                   <List className="h-4 w-4" />
-                </Button>
-              </div>
+                </ToggleGroupItem>
+              </ToggleGroup>
               
               <Button asChild>
                 <Link href="/dashboard/inboxes/new">
