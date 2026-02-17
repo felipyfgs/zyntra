@@ -1,0 +1,36 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: zyntra-postgres
+    environment:
+      POSTGRES_USER: zyntra
+      POSTGRES_PASSWORD: zyntra_secret
+      POSTGRES_DB: zyntra
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U zyntra"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  nats:
+    image: nats:2.10-alpine
+    container_name: zyntra-nats
+    ports:
+      - "4222:4222"   # NATS client port
+      - "8222:8222"   # HTTP monitoring
+    command: 
+      - "-js"         # Enable JetStream
+      - "-m"
+      - "8222"        # Monitoring port
+      - "-sd"
+      - "/data"       # JetStream storage directory
+    volumes:
+      - nats_data:/data
+
+volumes:
+  postgres_data:
+  nats_data:

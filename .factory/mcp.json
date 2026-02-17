@@ -1,0 +1,49 @@
+{
+  "mcpServers": {
+    "kibo-ui": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "mcp-remote",
+        "https://www.kibo-ui.com/api/mcp/mcp"
+      ],
+      "disabled": false
+    },
+    "shadcn": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "shadcn@latest",
+        "mcp"
+      ],
+      "disabled": false
+    },
+    "context7": {
+      "type": "http",
+      "url": "https://mcp.context7.com/mcp",
+      "disabled": false
+    },
+    "playwright": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@playwright/mcp@latest"
+      ],
+      "note": "Requires npx (Node.js) to be installed",
+      "disabled": false
+    },
+    "postgres": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-postgres",
+        "postgresql://zyntra:zyntra_secret@localhost:5432/zyntra"
+      ],
+      "disabled": false
+    }
+  }
+}
