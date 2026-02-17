@@ -6,19 +6,20 @@ import (
 	"log"
 	"sync"
 
+	wapkg "github.com/zyntra/backend/pkg/whatsapp"
 	"github.com/zyntra/backend/internal/ports"
 )
 
 // Manager gerencia multiplas conexoes WhatsApp
 type Manager struct {
-	store    *Store
+	store    *wapkg.Store
 	adapters map[string]*Adapter
 	handler  ports.ChannelEventHandler
 	mu       sync.RWMutex
 }
 
 // NewManager cria novo manager
-func NewManager(store *Store) *Manager {
+func NewManager(store *wapkg.Store) *Manager {
 	return &Manager{
 		store:    store,
 		adapters: make(map[string]*Adapter),
@@ -41,15 +42,19 @@ func (m *Manager) Connect(ctx context.Context, inboxID, jid string) error {
 		}
 	}
 
+	// Obter device do store
 	device, err := m.store.GetDevice(ctx, jid)
 	if err != nil {
 		return fmt.Errorf("failed to get device: %w", err)
 	}
 
-	adapter := NewAdapter(device, inboxID)
+	// Criar cliente e adapter
+	client := wapkg.NewClient(device)
+	adapter := NewAdapter(client, inboxID)
 	adapter.SetEventHandler(m.handler)
 	m.adapters[inboxID] = adapter
 
+	// Conectar
 	return adapter.Connect(ctx, inboxID)
 }
 
@@ -81,7 +86,8 @@ func (m *Manager) Remove(ctx context.Context, inboxID string) error {
 	}
 	m.mu.Unlock()
 
-	if adapter.client.IsLoggedIn() {
+	// Fazer logout se conectado
+	if adapter.client.IsConnected() {
 		if err := adapter.Logout(ctx); err != nil {
 			log.Printf("[WhatsApp] Failed to logout %s: %v", inboxID, err)
 		}
@@ -155,7 +161,7 @@ func (m *Manager) GetInfo(inboxID string) map[string]interface{} {
 		"inbox_id": inboxID,
 		"status":   adapter.Status(),
 		"jid":      adapter.GetJID(),
-		"phone":    adapter.GetPhoneNumber(),
+		"phone":    adapter.GetPhone(),
 	}
 }
 
@@ -217,10 +223,6 @@ func (m *Manager) Shutdown() {
 	}
 
 	m.adapters = make(map[string]*Adapter)
-
-	if m.store != nil {
-		m.store.Close()
-	}
 }
 
 // InboxInfo info para restaurar conexao

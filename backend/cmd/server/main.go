@@ -17,6 +17,8 @@ import (
 	"github.com/zyntra/backend/internal/router"
 	"github.com/zyntra/backend/internal/services"
 	natspkg "github.com/zyntra/backend/pkg/nats"
+	wapkg "github.com/zyntra/backend/pkg/whatsapp"
+	wspkg "github.com/zyntra/backend/pkg/websocket"
 )
 
 func main() {
@@ -44,13 +46,13 @@ func main() {
 		natsClient.SetupStreams(context.Background())
 	}
 
-	// WhatsApp Store
-	waStore, err := whatsapp.NewStore(database.DefaultConfig().DSN())
+	// WhatsApp Store (pkg/whatsapp)
+	waStore, err := wapkg.NewStore(database.DefaultConfig().DSN())
 	if err != nil {
 		log.Fatalf("Failed to initialize WhatsApp store: %v", err)
 	}
 
-	// WhatsApp Manager
+	// WhatsApp Manager (internal/channels/whatsapp)
 	waManager := whatsapp.NewManager(waStore)
 
 	// Repositories
@@ -90,8 +92,8 @@ func main() {
 	contactHandler := handlers.NewContactHandler(contactService, conversationService)
 	labelHandler := handlers.NewLabelHandler(labelRepo)
 
-	// WebSocket Hub
-	wsHub := handlers.NewWebSocketHub()
+	// WebSocket Hub (pkg/websocket)
+	wsHub := wspkg.NewHub()
 	go wsHub.Run()
 	wsHandler := handlers.NewWebSocketHandler(wsHub)
 
