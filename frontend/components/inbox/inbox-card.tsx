@@ -34,20 +34,20 @@ interface InboxCardProps {
 export const channelConfig = {
   whatsapp: { 
     label: "WhatsApp", 
-    brandColor: "#25D366",
-    bgLight: "bg-green-100",
+    brandColor: "default" as const,
+    bgLight: "bg-green-50",
     icon: SiWhatsapp,
   },
   telegram: { 
     label: "Telegram", 
-    brandColor: "#0088CC",
-    bgLight: "bg-blue-100",
+    brandColor: "default" as const,
+    bgLight: "bg-blue-50",
     icon: SiTelegram,
   },
   api: { 
     label: "API", 
     brandColor: "#8B5CF6",
-    bgLight: "bg-purple-100",
+    bgLight: "bg-purple-50",
     icon: Bot,
   },
 }
