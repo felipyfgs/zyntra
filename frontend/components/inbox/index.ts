@@ -1,7 +1,2 @@
 export * from "./inbox-card"
 export * from "./qr-code-dialog"
-export * from "./create-inbox-dialog"
-export * from "./channel-selector"
-export * from "./whatsapp-setup"
-export * from "./telegram-setup"
-export * from "./api-setup"

@@ -1,10 +1,10 @@
 "use client"
 
 import { useState } from "react"
+import Link from "next/link"
 import { AppSidebar } from "@/components/layout/app-sidebar"
 import { InboxCard } from "@/components/inbox/inbox-card"
 import { QRCodeDialog } from "@/components/inbox/qr-code-dialog"
-import { CreateInboxDialog } from "@/components/inbox/create-inbox-dialog"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -29,12 +29,10 @@ import {
 import type { Inbox as InboxType } from "@/lib/api/types"
 
 export default function InboxesPage() {
-  const [createDialogOpen, setCreateDialogOpen] = useState(false)
   const [qrDialogOpen, setQrDialogOpen] = useState(false)
   const [selectedInbox, setSelectedInbox] = useState<InboxType | null>(null)
 
-  // API hooks
-  const { data: inboxes, isLoading, refetch } = useInboxes()
+  const { data: inboxes, isLoading } = useInboxes()
   const deleteMutation = useDeleteInbox()
   const disconnectMutation = useDisconnectInbox()
 
@@ -69,10 +67,10 @@ export default function InboxesPage() {
     <SidebarProvider>
       <AppSidebar />
       <SidebarInset>
-        <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
+        <header className="flex h-16 shrink-0 items-center gap-2">
           <div className="flex items-center gap-2 px-4">
             <SidebarTrigger className="-ml-1" />
-            <Separator orientation="vertical" className="mr-2 data-[orientation=vertical]:h-4" />
+            <Separator orientation="vertical" className="mr-2 h-4" />
             <Breadcrumb>
               <BreadcrumbList>
                 <BreadcrumbItem>
@@ -89,9 +87,11 @@ export default function InboxesPage() {
               <h1 className="text-2xl font-bold">Inboxes</h1>
               <p className="text-muted-foreground">Gerencie seus canais de atendimento</p>
             </div>
-            <Button onClick={() => setCreateDialogOpen(true)}>
-              <Plus className="mr-2 h-4 w-4" />
-              Novo Inbox
+            <Button asChild>
+              <Link href="/dashboard/inboxes/new">
+                <Plus className="mr-2 h-4 w-4" />
+                Novo Inbox
+              </Link>
             </Button>
           </div>
 
@@ -153,9 +153,11 @@ export default function InboxesPage() {
                     <Inbox className="h-12 w-12 mb-4" />
                     <p className="text-lg font-medium">Nenhum inbox configurado</p>
                     <p className="text-sm mb-4">Conecte um canal para comecar a receber mensagens</p>
-                    <Button onClick={() => setCreateDialogOpen(true)}>
-                      <Plus className="mr-2 h-4 w-4" />
-                      Criar primeiro inbox
+                    <Button asChild>
+                      <Link href="/dashboard/inboxes/new">
+                        <Plus className="mr-2 h-4 w-4" />
+                        Criar primeiro inbox
+                      </Link>
                     </Button>
                   </div>
                 )}
@@ -207,13 +209,6 @@ export default function InboxesPage() {
           </Tabs>
         </div>
       </SidebarInset>
-
-      {/* Create Inbox Dialog */}
-      <CreateInboxDialog
-        open={createDialogOpen}
-        onOpenChange={setCreateDialogOpen}
-        onSuccess={() => refetch()}
-      />
 
       {/* QR Code Dialog */}
       <QRCodeDialog
