@@ -1,9 +1,10 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState } from "react"
 import { AppSidebar } from "@/components/layout/app-sidebar"
 import { InboxCard } from "@/components/inbox/inbox-card"
 import { QRCodeDialog } from "@/components/inbox/qr-code-dialog"
+import { CreateInboxDialog } from "@/components/inbox/create-inbox-dialog"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -19,51 +20,21 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
-import { Label } from "@/components/ui/label"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
-import { Switch } from "@/components/ui/switch"
-import { Plus, Inbox, Wifi, WifiOff, Loader2, Phone, Send, Bot } from "lucide-react"
+import { Plus, Inbox, Wifi, WifiOff, Loader2 } from "lucide-react"
 import {
   useInboxes,
-  useCreateInbox,
   useDeleteInbox,
   useDisconnectInbox,
 } from "@/lib/api/hooks"
-import type { Inbox as InboxType, CreateInboxRequest } from "@/lib/api/types"
+import type { Inbox as InboxType } from "@/lib/api/types"
 
 export default function InboxesPage() {
-  const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const [createDialogOpen, setCreateDialogOpen] = useState(false)
   const [qrDialogOpen, setQrDialogOpen] = useState(false)
   const [selectedInbox, setSelectedInbox] = useState<InboxType | null>(null)
-  
-  // Form state
-  const [formData, setFormData] = useState<CreateInboxRequest>({
-    name: "",
-    channel_type: "whatsapp",
-    greeting_message: "",
-    auto_assignment: false,
-  })
 
   // API hooks
-  const { data: inboxes, isLoading, isError } = useInboxes()
-  const createMutation = useCreateInbox()
+  const { data: inboxes, isLoading, refetch } = useInboxes()
   const deleteMutation = useDeleteInbox()
   const disconnectMutation = useDisconnectInbox()
 
@@ -72,27 +43,6 @@ export default function InboxesPage() {
 
   const activeInboxes = inboxes?.filter((i) => i.status === "connected") || []
   const pendingInboxes = inboxes?.filter((i) => i.status !== "connected") || []
-
-  const resetForm = () => {
-    setFormData({
-      name: "",
-      channel_type: "whatsapp",
-      greeting_message: "",
-      auto_assignment: false,
-    })
-  }
-
-  const handleCreateInbox = async () => {
-    if (!formData.name.trim()) return
-
-    try {
-      await createMutation.mutateAsync(formData)
-      resetForm()
-      setIsDialogOpen(false)
-    } catch (error) {
-      console.error("Failed to create inbox:", error)
-    }
-  }
 
   const handleDeleteInbox = async (id: string) => {
     try {
@@ -113,12 +63,6 @@ export default function InboxesPage() {
   const handleShowQR = (inbox: InboxType) => {
     setSelectedInbox(inbox)
     setQrDialogOpen(true)
-  }
-
-  const channelIcons = {
-    whatsapp: <Phone className="h-4 w-4 text-green-500" />,
-    telegram: <Send className="h-4 w-4 text-blue-500" />,
-    api: <Bot className="h-4 w-4 text-gray-500" />,
   }
 
   return (
@@ -145,114 +89,10 @@ export default function InboxesPage() {
               <h1 className="text-2xl font-bold">Inboxes</h1>
               <p className="text-muted-foreground">Gerencie seus canais de atendimento</p>
             </div>
-            <Dialog open={isDialogOpen} onOpenChange={(open) => {
-              setIsDialogOpen(open)
-              if (!open) resetForm()
-            }}>
-              <DialogTrigger asChild>
-                <Button>
-                  <Plus className="mr-2 h-4 w-4" />
-                  Novo Inbox
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-[480px]">
-                <DialogHeader>
-                  <DialogTitle>Criar Novo Inbox</DialogTitle>
-                  <DialogDescription>
-                    Configure um novo canal de atendimento para sua equipe.
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="grid gap-4 py-4">
-                  <div className="grid gap-2">
-                    <Label htmlFor="channel_type">Tipo de Canal</Label>
-                    <Select
-                      value={formData.channel_type}
-                      onValueChange={(value: "whatsapp" | "telegram" | "api") => 
-                        setFormData(prev => ({ ...prev, channel_type: value }))
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="whatsapp">
-                          <div className="flex items-center gap-2">
-                            <Phone className="h-4 w-4 text-green-500" />
-                            WhatsApp
-                          </div>
-                        </SelectItem>
-                        <SelectItem value="telegram">
-                          <div className="flex items-center gap-2">
-                            <Send className="h-4 w-4 text-blue-500" />
-                            Telegram
-                          </div>
-                        </SelectItem>
-                        <SelectItem value="api">
-                          <div className="flex items-center gap-2">
-                            <Bot className="h-4 w-4 text-gray-500" />
-                            API
-                          </div>
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="grid gap-2">
-                    <Label htmlFor="name">Nome do Inbox</Label>
-                    <Input
-                      id="name"
-                      value={formData.name}
-                      onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                      placeholder="Ex: Atendimento Principal"
-                    />
-                  </div>
-
-                  <div className="grid gap-2">
-                    <Label htmlFor="greeting">Mensagem de Boas-vindas (opcional)</Label>
-                    <Textarea
-                      id="greeting"
-                      value={formData.greeting_message}
-                      onChange={(e) => setFormData(prev => ({ ...prev, greeting_message: e.target.value }))}
-                      placeholder="Ola! Seja bem-vindo ao nosso atendimento..."
-                      rows={3}
-                    />
-                    <p className="text-xs text-muted-foreground">
-                      Esta mensagem sera enviada automaticamente quando um novo contato iniciar uma conversa.
-                    </p>
-                  </div>
-
-                  <div className="flex items-center justify-between rounded-lg border p-3">
-                    <div className="space-y-0.5">
-                      <Label htmlFor="auto_assignment">Atribuicao automatica</Label>
-                      <p className="text-xs text-muted-foreground">
-                        Distribui conversas automaticamente entre os agentes disponiveis
-                      </p>
-                    </div>
-                    <Switch
-                      id="auto_assignment"
-                      checked={formData.auto_assignment}
-                      onCheckedChange={(checked) => 
-                        setFormData(prev => ({ ...prev, auto_assignment: checked }))
-                      }
-                    />
-                  </div>
-                </div>
-                <DialogFooter>
-                  <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
-                    Cancelar
-                  </Button>
-                  <Button 
-                    onClick={handleCreateInbox} 
-                    disabled={createMutation.isPending || !formData.name.trim()}
-                  >
-                    {createMutation.isPending && (
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    )}
-                    Criar Inbox
-                  </Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
+            <Button onClick={() => setCreateDialogOpen(true)}>
+              <Plus className="mr-2 h-4 w-4" />
+              Novo Inbox
+            </Button>
           </div>
 
           {/* Stats Cards */}
@@ -312,7 +152,11 @@ export default function InboxesPage() {
                   <div className="col-span-full flex flex-col items-center justify-center py-12 text-muted-foreground">
                     <Inbox className="h-12 w-12 mb-4" />
                     <p className="text-lg font-medium">Nenhum inbox configurado</p>
-                    <p className="text-sm">Clique em "Novo Inbox" para comecar</p>
+                    <p className="text-sm mb-4">Conecte um canal para comecar a receber mensagens</p>
+                    <Button onClick={() => setCreateDialogOpen(true)}>
+                      <Plus className="mr-2 h-4 w-4" />
+                      Criar primeiro inbox
+                    </Button>
                   </div>
                 )}
                 {isLoading && (
@@ -363,6 +207,13 @@ export default function InboxesPage() {
           </Tabs>
         </div>
       </SidebarInset>
+
+      {/* Create Inbox Dialog */}
+      <CreateInboxDialog
+        open={createDialogOpen}
+        onOpenChange={setCreateDialogOpen}
+        onSuccess={() => refetch()}
+      />
 
       {/* QR Code Dialog */}
       <QRCodeDialog
