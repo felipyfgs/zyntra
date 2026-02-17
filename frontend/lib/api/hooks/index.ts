@@ -1,11 +1,11 @@
 // Auth hooks
 export * from "./useAuth"
 
-// Chat hooks
-export * from "./useChats"
+// Inbox hooks
+export * from "./useInboxes"
+
+// Conversation hooks
+export * from "./useConversations"
 
 // Message hooks
 export * from "./useMessages"
-
-// Connection hooks
-export * from "./useConnections"

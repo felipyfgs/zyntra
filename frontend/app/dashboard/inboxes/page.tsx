@@ -32,22 +32,22 @@ import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { Plus, Link2, Wifi, WifiOff, Loader2 } from "lucide-react"
 import {
-  useConnections,
-  useCreateConnection,
-  useDeleteConnection,
-  useDisconnectWhatsApp,
+  useInboxes,
+  useCreateInbox,
+  useDeleteInbox,
+  useDisconnectInbox,
 } from "@/lib/api/hooks"
-import type { Connection as APIConnection } from "@/lib/api/types"
+import type { Inbox as APIInbox } from "@/lib/api/types"
 
-// Convert API connection to UI connection type
-function mapAPIConnection(apiConn: APIConnection): Connection {
+// Convert API inbox to UI connection type
+function mapAPIInbox(inbox: APIInbox): Connection {
   return {
-    id: apiConn.id,
-    name: apiConn.name,
-    platform: "whatsapp",
-    status: apiConn.status as Connection["status"],
-    phone: apiConn.phone,
-    lastSync: apiConn.updated_at ? new Date(apiConn.updated_at) : undefined,
+    id: inbox.id,
+    name: inbox.name,
+    platform: inbox.channel_type || "whatsapp",
+    status: inbox.status as Connection["status"],
+    phone: inbox.phone,
+    lastSync: inbox.updated_at ? new Date(inbox.updated_at) : undefined,
   }
 }
 
@@ -61,28 +61,28 @@ const mockConnections: Connection[] = [
   },
 ]
 
-export default function ConnectionsPage() {
+export default function InboxesPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false)
-  const [newConnectionName, setNewConnectionName] = useState("")
+  const [newInboxName, setNewInboxName] = useState("")
   const [qrDialogOpen, setQrDialogOpen] = useState(false)
-  const [selectedConnection, setSelectedConnection] = useState<Connection | null>(null)
+  const [selectedInbox, setSelectedInbox] = useState<Connection | null>(null)
 
   // API hooks
-  const { data: apiConnections, isLoading, isError } = useConnections()
-  const createMutation = useCreateConnection()
-  const deleteMutation = useDeleteConnection()
-  const disconnectMutation = useDisconnectWhatsApp()
+  const { data: apiInboxes, isLoading, isError } = useInboxes()
+  const createMutation = useCreateInbox()
+  const deleteMutation = useDeleteInbox()
+  const disconnectMutation = useDisconnectInbox()
 
   // Use API data or fallback to mock
   const connections = useMemo(() => {
-    if (apiConnections && apiConnections.length > 0) {
-      return apiConnections.map(mapAPIConnection)
+    if (apiInboxes && apiInboxes.length > 0) {
+      return apiInboxes.map(mapAPIInbox)
     }
     if (isError || isLoading) {
       return mockConnections
     }
     return []
-  }, [apiConnections, isLoading, isError])
+  }, [apiInboxes, isLoading, isError])
 
   const connectedCount = connections.filter((c) => c.status === "connected").length
   const disconnectedCount = connections.filter((c) => c.status !== "connected").length
@@ -90,23 +90,23 @@ export default function ConnectionsPage() {
   const activeConnections = connections.filter((c) => c.status === "connected")
   const pendingConnections = connections.filter((c) => c.status !== "connected")
 
-  const handleAddConnection = async () => {
-    if (!newConnectionName.trim()) return
+  const handleAddInbox = async () => {
+    if (!newInboxName.trim()) return
 
     try {
-      await createMutation.mutateAsync({ name: newConnectionName })
-      setNewConnectionName("")
+      await createMutation.mutateAsync({ name: newInboxName, channel_type: "whatsapp" })
+      setNewInboxName("")
       setIsDialogOpen(false)
     } catch (error) {
-      console.error("Failed to create connection:", error)
+      console.error("Failed to create inbox:", error)
     }
   }
 
-  const handleDeleteConnection = async (id: string) => {
+  const handleDeleteInbox = async (id: string) => {
     try {
       await deleteMutation.mutateAsync(id)
     } catch (error) {
-      console.error("Failed to delete connection:", error)
+      console.error("Failed to delete inbox:", error)
     }
   }
 
@@ -119,7 +119,7 @@ export default function ConnectionsPage() {
   }
 
   const handleShowQR = (connection: Connection) => {
-    setSelectedConnection(connection)
+    setSelectedInbox(connection)
     setQrDialogOpen(true)
   }
 
@@ -146,32 +146,32 @@ export default function ConnectionsPage() {
         <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold">Conexoes</h1>
-              <p className="text-muted-foreground">Gerencie suas conexoes WhatsApp</p>
+              <h1 className="text-2xl font-bold">Inboxes</h1>
+              <p className="text-muted-foreground">Gerencie seus canais de atendimento</p>
             </div>
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogTrigger asChild>
                 <Button>
                   <Plus className="mr-2 h-4 w-4" />
-                  Nova Conexao
+                  Novo Inbox
                 </Button>
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
-                  <DialogTitle>Nova Conexao WhatsApp</DialogTitle>
+                  <DialogTitle>Novo Inbox WhatsApp</DialogTitle>
                   <DialogDescription>
-                    Crie uma nova conexao para conectar seu WhatsApp.
+                    Crie um novo inbox para conectar seu WhatsApp.
                   </DialogDescription>
                 </DialogHeader>
                 <div className="grid gap-4 py-4">
                   <div className="grid gap-2">
-                    <Label htmlFor="name">Nome da Conexao</Label>
+                    <Label htmlFor="name">Nome do Inbox</Label>
                     <Input
                       id="name"
-                      value={newConnectionName}
-                      onChange={(e) => setNewConnectionName(e.target.value)}
+                      value={newInboxName}
+                      onChange={(e) => setNewInboxName(e.target.value)}
                       placeholder="Ex: Atendimento Principal"
-                      onKeyDown={(e) => e.key === "Enter" && handleAddConnection()}
+                      onKeyDown={(e) => e.key === "Enter" && handleAddInbox()}
                     />
                   </div>
                 </div>
@@ -180,13 +180,13 @@ export default function ConnectionsPage() {
                     Cancelar
                   </Button>
                   <Button 
-                    onClick={handleAddConnection} 
-                    disabled={createMutation.isPending || !newConnectionName.trim()}
+                    onClick={handleAddInbox} 
+                    disabled={createMutation.isPending || !newInboxName.trim()}
                   >
                     {createMutation.isPending && (
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     )}
-                    Criar Conexao
+                    Criar Inbox
                   </Button>
                 </DialogFooter>
               </DialogContent>
@@ -241,13 +241,13 @@ export default function ConnectionsPage() {
                     connection={connection}
                     onShowQR={() => handleShowQR(connection)}
                     onDisconnect={() => handleDisconnect(connection.id)}
-                    onDelete={() => handleDeleteConnection(connection.id)}
+                    onDelete={() => handleDeleteInbox(connection.id)}
                     isLoading={deleteMutation.isPending || disconnectMutation.isPending}
                   />
                 ))}
                 {connections.length === 0 && !isLoading && (
                   <p className="col-span-full text-center text-muted-foreground py-8">
-                    Nenhuma conexao. Clique em "Nova Conexao" para comecar.
+                    Nenhum inbox. Clique em "Novo Inbox" para comecar.
                   </p>
                 )}
                 {isLoading && (
@@ -264,13 +264,13 @@ export default function ConnectionsPage() {
                     key={connection.id}
                     connection={connection}
                     onDisconnect={() => handleDisconnect(connection.id)}
-                    onDelete={() => handleDeleteConnection(connection.id)}
+                    onDelete={() => handleDeleteInbox(connection.id)}
                     isLoading={deleteMutation.isPending || disconnectMutation.isPending}
                   />
                 ))}
                 {activeConnections.length === 0 && (
                   <p className="col-span-full text-center text-muted-foreground py-8">
-                    Nenhuma conexao ativa.
+                    Nenhum inbox ativo.
                   </p>
                 )}
               </div>
@@ -282,13 +282,13 @@ export default function ConnectionsPage() {
                     key={connection.id}
                     connection={connection}
                     onShowQR={() => handleShowQR(connection)}
-                    onDelete={() => handleDeleteConnection(connection.id)}
+                    onDelete={() => handleDeleteInbox(connection.id)}
                     isLoading={deleteMutation.isPending}
                   />
                 ))}
                 {pendingConnections.length === 0 && (
                   <p className="col-span-full text-center text-muted-foreground py-8">
-                    Nenhuma conexao pendente.
+                    Nenhum inbox pendente.
                   </p>
                 )}
               </div>
@@ -299,8 +299,8 @@ export default function ConnectionsPage() {
 
       {/* QR Code Dialog */}
       <QRCodeDialog
-        connectionId={selectedConnection?.id || null}
-        connectionName={selectedConnection?.name || ""}
+        connectionId={selectedInbox?.id || null}
+        connectionName={selectedInbox?.name || ""}
         open={qrDialogOpen}
         onOpenChange={setQrDialogOpen}
       />

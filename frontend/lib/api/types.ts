@@ -1,12 +1,31 @@
-// Chat types
-export interface Chat {
+// Inbox types (antigo Connection)
+export interface Inbox {
   id: string
-  connection_id: string
-  jid: string
   name: string
+  channel_type: "whatsapp" | "telegram" | "api"
+  greeting_message?: string
+  auto_assignment: boolean
+  status: "disconnected" | "connecting" | "qr_code" | "connected"
   phone?: string
-  avatar_url?: string
-  is_group: boolean
+  created_at: string
+  updated_at: string
+}
+
+export interface CreateInboxRequest {
+  name: string
+  channel_type: "whatsapp" | "telegram" | "api"
+  greeting_message?: string
+  auto_assignment?: boolean
+}
+
+// Conversation types (antigo Chat)
+export interface Conversation {
+  id: string
+  inbox_id: string
+  contact_id: string
+  status: "open" | "pending" | "resolved" | "snoozed"
+  priority: "low" | "medium" | "high" | "urgent"
+  assignee_id?: string
   is_favorite: boolean
   is_archived: boolean
   unread_count: number
@@ -14,99 +33,91 @@ export interface Chat {
   last_message_at?: string
   created_at: string
   updated_at: string
+  // Populated fields
+  contact?: Contact
+  inbox?: Inbox
 }
 
-export interface ChatFilter {
-  connection_id?: string
+export interface ConversationFilter {
+  inbox_id?: string
+  status?: Conversation["status"]
+  assignee_id?: string
   search?: string
   filter?: "all" | "unread" | "groups" | "favorites" | "archived"
-  page?: number
-  per_page?: number
+  limit?: number
+  offset?: number
 }
 
 // Message types
 export interface Message {
   id: string
-  connection_id: string
-  chat_jid: string
-  sender_jid: string
-  sender_name?: string
-  direction: "inbound" | "outbound"
+  conversation_id: string
+  sender_id?: string
+  sender_type: "user" | "contact"
+  content_type: "text" | "image" | "video" | "audio" | "document" | "location" | "contact"
   content: string
-  media_type?: string
-  media_url?: string
-  status: "pending" | "sent" | "delivered" | "read"
-  timestamp: string
+  private: boolean
+  status: "pending" | "sent" | "delivered" | "read" | "failed"
+  external_id?: string
   created_at: string
+  // Populated
+  sender?: User | Contact
+  attachments?: Attachment[]
 }
 
-export interface MessageFilter {
-  chat_id: string
-  page?: number
-  per_page?: number
-  before?: string
-  after?: string
+export interface Attachment {
+  id: string
+  message_id: string
+  file_type: string
+  file_url: string
+  file_name?: string
+  file_size?: number
 }
 
 export interface SendMessageRequest {
   content: string
-  media_url?: string
-  media_type?: string
-}
-
-// Connection types
-export interface Connection {
-  id: string
-  user_id: string
-  name: string
-  phone?: string
-  jid?: string
-  status: "disconnected" | "connecting" | "qr_code" | "connected"
-  created_at: string
-  updated_at: string
-}
-
-export interface CreateConnectionRequest {
-  name: string
+  content_type?: Message["content_type"]
+  private?: boolean
 }
 
 // Contact types
 export interface Contact {
   id: string
-  connection_id: string
-  jid: string
-  phone: string
   name?: string
-  push_name?: string
+  email?: string
+  phone_number?: string
   avatar_url?: string
+  custom_attributes?: Record<string, unknown>
   created_at: string
   updated_at: string
+  // Contact inboxes
+  inboxes?: ContactInbox[]
 }
 
-// Filter types
-export interface FilterRule {
+export interface ContactInbox {
   id: string
-  field: string
-  operator: string
-  value?: string
-}
-
-export interface SavedFilter {
-  id: string
-  user_id: string
-  name: string
-  rules: FilterRule[]
-  position: number
+  contact_id: string
+  inbox_id: string
+  source_id: string
   created_at: string
-  updated_at: string
 }
 
-// Auth types
+// Label types
+export interface Label {
+  id: string
+  title: string
+  color: string
+  description?: string
+  created_at: string
+}
+
+// User types
 export interface User {
   id: string
   name: string
   email: string
   role: string
+  avatar_url?: string
   created_at: string
 }
 
@@ -157,3 +168,9 @@ export interface PaginationMeta {
   total: number
   total_pages: number
 }
+
+// Legacy aliases (para compatibilidade temporária)
+export type Connection = Inbox
+export type CreateConnectionRequest = CreateInboxRequest
+export type Chat = Conversation
+export type ChatFilter = ConversationFilter

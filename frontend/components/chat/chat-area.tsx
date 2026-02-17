@@ -33,7 +33,7 @@ type ChatMessage = {
   content: string
   sender: "user" | "other"
   timestamp: Date
-  status?: "pending" | "sent" | "delivered" | "read"
+  status?: "pending" | "sent" | "delivered" | "read" | "failed"
 }
 
 type ChatAreaProps = {
@@ -47,8 +47,8 @@ function mapAPIMessage(apiMsg: APIMessage): ChatMessage {
   return {
     id: apiMsg.id,
     content: apiMsg.content,
-    sender: apiMsg.direction === "outbound" ? "user" : "other",
-    timestamp: new Date(apiMsg.timestamp),
+    sender: apiMsg.sender_type === "user" ? "user" : "other",
+    timestamp: new Date(apiMsg.created_at),
     status: apiMsg.status,
   }
 }
@@ -110,7 +110,7 @@ export function ChatArea({ chat, connectionId, onBack }: ChatAreaProps) {
 
     try {
       await sendMessageMutation.mutateAsync({
-        chatId: chat.id,
+        conversationId: chat.id,
         message: { content: message.text },
       })
     } catch (error) {

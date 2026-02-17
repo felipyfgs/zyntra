@@ -48,8 +48,8 @@ const data = {
   ],
   navMain: [
     {
-      title: "Chats",
-      url: "/dashboard/chats",
+      title: "Conversations",
+      url: "/dashboard/conversations",
       icon: MessageCircle,
     },
     {
@@ -58,8 +58,8 @@ const data = {
       icon: Users,
     },
     {
-      title: "Connections",
-      url: "/dashboard/connections",
+      title: "Inboxes",
+      url: "/dashboard/inboxes",
       icon: Link2,
     },
     {

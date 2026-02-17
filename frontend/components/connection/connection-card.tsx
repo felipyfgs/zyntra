@@ -14,7 +14,7 @@ import {
 export interface Connection {
   id: string
   name: string
-  platform: "whatsapp" | "telegram" | "instagram" | "messenger"
+  platform: "whatsapp" | "telegram" | "instagram" | "messenger" | "api"
   status: "connected" | "disconnected" | "pending" | "connecting" | "qr_code"
   phone?: string
   lastSync?: Date
@@ -34,6 +34,7 @@ const platformConfig = {
   telegram: { label: "Telegram", color: "bg-blue-500" },
   instagram: { label: "Instagram", color: "bg-pink-500" },
   messenger: { label: "Messenger", color: "bg-purple-500" },
+  api: { label: "API", color: "bg-gray-500" },
 }
 
 const statusConfig = {

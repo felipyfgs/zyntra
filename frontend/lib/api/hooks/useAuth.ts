@@ -37,7 +37,7 @@ export function useLogin() {
     onSuccess: (data) => {
       setTokens(data.tokens.access_token, data.tokens.refresh_token)
       queryClient.setQueryData(authKeys.profile(), data.user)
-      router.push("/dashboard/chats")
+      router.push("/dashboard/conversations")
     },
   })
 }
@@ -55,7 +55,7 @@ export function useRegister() {
     onSuccess: (data) => {
       setTokens(data.tokens.access_token, data.tokens.refresh_token)
       queryClient.setQueryData(authKeys.profile(), data.user)
-      router.push("/dashboard/chats")
+      router.push("/dashboard/conversations")
     },
   })
 }

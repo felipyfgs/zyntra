@@ -32,27 +32,27 @@ import {
   InputGroupInput,
 } from "@/components/ui/input-group"
 import { cn } from "@/lib/utils"
-import { useChats } from "@/lib/api/hooks"
-import type { Chat as APIChat, ChatFilter } from "@/lib/api/types"
+import { useConversations } from "@/lib/api/hooks"
+import type { Conversation as APIConversation, ConversationFilter } from "@/lib/api/types"
 
-// Extended Chat type with connectionId for NATS
-type ChatWithConnection = Chat & { connectionId?: string }
+// Extended Chat type with inboxId
+type ChatWithInbox = Chat & { inboxId?: string }
 
-// Convert API Chat to local Chat type
-function mapAPIChat(apiChat: APIChat): ChatWithConnection {
+// Convert API Conversation to local Chat type
+function mapAPIConversation(conv: APIConversation): ChatWithInbox {
   return {
-    id: apiChat.id,
-    connectionId: apiChat.connection_id,
-    name: apiChat.name,
-    avatar: apiChat.avatar_url,
-    lastMessage: apiChat.last_message || "",
-    timestamp: apiChat.last_message_at ? new Date(apiChat.last_message_at) : new Date(apiChat.created_at),
-    unreadCount: apiChat.unread_count,
+    id: conv.id,
+    inboxId: conv.inbox_id,
+    name: conv.contact?.name || conv.contact?.phone_number || "Unknown",
+    avatar: conv.contact?.avatar_url,
+    lastMessage: conv.last_message || "",
+    timestamp: conv.last_message_at ? new Date(conv.last_message_at) : new Date(conv.created_at),
+    unreadCount: conv.unread_count,
     isOnline: false,
-    isGroup: apiChat.is_group,
-    isFavorite: apiChat.is_favorite,
+    isGroup: false,
+    isFavorite: conv.is_favorite,
     hasMedia: false,
-    isWaiting: false,
+    isWaiting: conv.status === "pending",
   }
 }
 
@@ -60,8 +60,8 @@ function generateId() {
   return Math.random().toString(36).substring(2, 9)
 }
 
-export default function ChatsPage() {
-  const [selectedChat, setSelectedChat] = useState<ChatWithConnection | null>(null)
+export default function ConversationsPage() {
+  const [selectedChat, setSelectedChat] = useState<ChatWithInbox | null>(null)
   const [showChatArea, setShowChatArea] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
   const [allFilters, setAllFilters] = useState<FilterItem[]>([...DEFAULT_FILTERS])
@@ -74,8 +74,8 @@ export default function ChatsPage() {
   const [newChatNumber, setNewChatNumber] = useState("")
 
   // API filter based on active filter
-  const apiFilter = useMemo((): ChatFilter => {
-    const filter: ChatFilter = {}
+  const apiFilter = useMemo((): ConversationFilter => {
+    const filter: ConversationFilter = {}
     if (searchQuery) filter.search = searchQuery
     
     const activeFilter = allFilters.find((f) => f.id === activeFilterId)
@@ -92,13 +92,13 @@ export default function ChatsPage() {
     return filter
   }, [searchQuery, activeFilterId, allFilters])
 
-  // Fetch chats from API
-  const { data: apiData, isLoading } = useChats(apiFilter)
+  // Fetch conversations from API
+  const { data: apiData, isLoading } = useConversations(apiFilter)
 
-  // Use API data directly - no mock fallback
-  const chats = useMemo((): ChatWithConnection[] => {
-    if (apiData?.chats) {
-      return apiData.chats.map(mapAPIChat)
+  // Use API data directly
+  const chats = useMemo((): ChatWithInbox[] => {
+    if (apiData?.conversations) {
+      return apiData.conversations.map(mapAPIConversation)
     }
     return []
   }, [apiData])
@@ -108,7 +108,7 @@ export default function ChatsPage() {
     [allFilters, activeFilterId]
   )
 
-  const handleSelectChat = (chat: ChatWithConnection) => {
+  const handleSelectChat = (chat: ChatWithInbox) => {
     setSelectedChat(chat)
     setShowChatArea(true)
   }
@@ -439,7 +439,7 @@ export default function ChatsPage() {
             !showChatArea && "hidden md:flex"
           )}>
             {selectedChat ? (
-              <ChatArea chat={selectedChat} connectionId={selectedChat.connectionId} onBack={handleBack} />
+              <ChatArea chat={selectedChat} connectionId={selectedChat.inboxId} onBack={handleBack} />
             ) : (
               <div className="flex h-full flex-col items-center justify-center gap-4 text-muted-foreground">
                 <MessageSquare className="h-12 w-12" />

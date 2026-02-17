@@ -51,7 +51,7 @@ export function QRCodeDialog({
 
   const isConnecting = connectMutation.isPending || qrLoading
   const isConnected = connection?.status === "connected"
-  const qrCode = qrData?.qr_code
+  const qrCode = qrData?.qrcode
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

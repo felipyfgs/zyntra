@@ -2,29 +2,28 @@
 
 import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from "@tanstack/react-query"
 import api from "../client"
-import type { Message, MessageFilter, SendMessageRequest, PaginationMeta } from "../types"
+import type { Message, SendMessageRequest, PaginationMeta } from "../types"
 
-// Query keys
 export const messageKeys = {
   all: ["messages"] as const,
   lists: () => [...messageKeys.all, "list"] as const,
-  list: (chatId: string, filter?: Omit<MessageFilter, "chat_id">) => [...messageKeys.lists(), chatId, filter] as const,
+  list: (conversationId: string, filter?: { limit?: number; offset?: number }) =>
+    [...messageKeys.lists(), conversationId, filter] as const,
   detail: (id: string) => [...messageKeys.all, "detail", id] as const,
 }
 
-// Get messages for a chat
-export function useMessages(chatId: string | null, filter?: Omit<MessageFilter, "chat_id">) {
+export function useMessages(conversationId: string | null, filter?: { limit?: number; offset?: number }) {
   return useQuery({
-    queryKey: messageKeys.list(chatId || "", filter),
+    queryKey: messageKeys.list(conversationId || "", filter),
     queryFn: async () => {
-      if (!chatId) return { messages: [], meta: undefined }
+      if (!conversationId) return { messages: [], meta: undefined }
 
       const params = new URLSearchParams()
-      if (filter?.page) params.set("page", filter.page.toString())
-      if (filter?.per_page) params.set("per_page", filter.per_page.toString())
+      if (filter?.limit) params.set("limit", filter.limit.toString())
+      if (filter?.offset) params.set("offset", filter.offset.toString())
 
       const query = params.toString()
-      const endpoint = `/chats/${chatId}/messages${query ? `?${query}` : ""}`
+      const endpoint = `/conversations/${conversationId}/messages${query ? `?${query}` : ""}`
       const response = await api.get<Message[]>(endpoint)
 
       return {
@@ -32,52 +31,47 @@ export function useMessages(chatId: string | null, filter?: Omit<MessageFilter, 
         meta: response.meta as PaginationMeta | undefined,
       }
     },
-    enabled: !!chatId,
+    enabled: !!conversationId,
   })
 }
 
-// Get messages with infinite scroll (load more)
-export function useMessagesInfinite(chatId: string | null) {
+export function useMessagesInfinite(conversationId: string | null) {
   return useInfiniteQuery({
-    queryKey: messageKeys.list(chatId || ""),
-    queryFn: async ({ pageParam = 1 }) => {
-      if (!chatId) {
-        return { messages: [], meta: undefined, nextPage: undefined }
+    queryKey: messageKeys.list(conversationId || ""),
+    queryFn: async ({ pageParam = 0 }) => {
+      if (!conversationId) {
+        return { messages: [], meta: undefined, nextOffset: undefined }
       }
 
       const params = new URLSearchParams()
-      params.set("page", pageParam.toString())
-      params.set("per_page", "50")
+      params.set("offset", pageParam.toString())
+      params.set("limit", "50")
 
-      const response = await api.get<Message[]>(`/chats/${chatId}/messages?${params.toString()}`)
+      const response = await api.get<Message[]>(`/conversations/${conversationId}/messages?${params.toString()}`)
 
       return {
         messages: response.data || [],
         meta: response.meta as PaginationMeta | undefined,
-        nextPage: response.meta && response.meta.page < response.meta.total_pages
-          ? response.meta.page + 1
-          : undefined,
+        nextOffset: (response.data?.length || 0) === 50 ? pageParam + 50 : undefined,
       }
     },
-    initialPageParam: 1,
-    getNextPageParam: (lastPage) => lastPage.nextPage,
-    enabled: !!chatId,
+    initialPageParam: 0,
+    getNextPageParam: (lastPage) => lastPage.nextOffset,
+    enabled: !!conversationId,
   })
 }
 
-// Send message
 export function useSendMessage() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: async ({ chatId, message }: { chatId: string; message: SendMessageRequest }) => {
-      const response = await api.post<Message>(`/chats/${chatId}/messages`, message)
+    mutationFn: async ({ conversationId, message }: { conversationId: string; message: SendMessageRequest }) => {
+      const response = await api.post<Message>(`/conversations/${conversationId}/messages`, message)
       return response.data!
     },
-    onSuccess: (newMessage, { chatId }) => {
-      // Add message to cache optimistically
+    onSuccess: (newMessage, { conversationId }) => {
       queryClient.setQueryData(
-        messageKeys.list(chatId),
+        messageKeys.list(conversationId),
         (old: { messages: Message[]; meta?: PaginationMeta } | undefined) => {
           if (!old) return { messages: [newMessage], meta: undefined }
           return {
@@ -86,42 +80,36 @@ export function useSendMessage() {
           }
         }
       )
-      // Invalidate chat list to update last message
-      queryClient.invalidateQueries({ queryKey: ["chats", "list"] })
+      queryClient.invalidateQueries({ queryKey: ["conversations", "list"] })
     },
   })
 }
 
-// Update message status locally (from NATS events)
 export function useUpdateMessageStatus() {
   const queryClient = useQueryClient()
 
-  return (chatId: string, messageId: string, status: Message["status"]) => {
+  return (conversationId: string, messageId: string, status: Message["status"]) => {
     queryClient.setQueryData(
-      messageKeys.list(chatId),
+      messageKeys.list(conversationId),
       (old: { messages: Message[]; meta?: PaginationMeta } | undefined) => {
         if (!old) return old
         return {
           ...old,
-          messages: old.messages.map((msg) =>
-            msg.id === messageId ? { ...msg, status } : msg
-          ),
+          messages: old.messages.map((msg) => (msg.id === messageId ? { ...msg, status } : msg)),
         }
       }
     )
   }
 }
 
-// Add message to cache (from NATS events)
 export function useAddMessageToCache() {
   const queryClient = useQueryClient()
 
-  return (chatId: string, message: Message) => {
+  return (conversationId: string, message: Message) => {
     queryClient.setQueryData(
-      messageKeys.list(chatId),
+      messageKeys.list(conversationId),
       (old: { messages: Message[]; meta?: PaginationMeta } | undefined) => {
         if (!old) return { messages: [message], meta: undefined }
-        // Check if message already exists
         if (old.messages.some((m) => m.id === message.id)) {
           return old
         }
@@ -131,7 +119,6 @@ export function useAddMessageToCache() {
         }
       }
     )
-    // Invalidate chat list to update last message
-    queryClient.invalidateQueries({ queryKey: ["chats", "list"] })
+    queryClient.invalidateQueries({ queryKey: ["conversations", "list"] })
   }
 }
