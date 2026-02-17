@@ -2,8 +2,8 @@
 
 import { useState, useMemo } from "react"
 import { AppSidebar } from "@/components/layout/app-sidebar"
-import { ConnectionCard, type Connection } from "@/components/connection/connection-card"
-import { QRCodeDialog } from "@/components/connection/qr-code-dialog"
+import { InboxCard } from "@/components/inbox/inbox-card"
+import { QRCodeDialog } from "@/components/inbox/qr-code-dialog"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -28,74 +28,66 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
-import { Plus, Link2, Wifi, WifiOff, Loader2 } from "lucide-react"
+import { Textarea } from "@/components/ui/textarea"
+import { Switch } from "@/components/ui/switch"
+import { Plus, Inbox, Wifi, WifiOff, Loader2, Phone, Send, Bot } from "lucide-react"
 import {
   useInboxes,
   useCreateInbox,
   useDeleteInbox,
   useDisconnectInbox,
 } from "@/lib/api/hooks"
-import type { Inbox as APIInbox } from "@/lib/api/types"
-
-// Convert API inbox to UI connection type
-function mapAPIInbox(inbox: APIInbox): Connection {
-  return {
-    id: inbox.id,
-    name: inbox.name,
-    platform: inbox.channel_type || "whatsapp",
-    status: inbox.status as Connection["status"],
-    phone: inbox.phone,
-    lastSync: inbox.updated_at ? new Date(inbox.updated_at) : undefined,
-  }
-}
-
-// Mock data for development fallback
-const mockConnections: Connection[] = [
-  {
-    id: "mock-1",
-    name: "Conta Principal",
-    platform: "whatsapp",
-    status: "disconnected",
-  },
-]
+import type { Inbox as InboxType, CreateInboxRequest } from "@/lib/api/types"
 
 export default function InboxesPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false)
-  const [newInboxName, setNewInboxName] = useState("")
   const [qrDialogOpen, setQrDialogOpen] = useState(false)
-  const [selectedInbox, setSelectedInbox] = useState<Connection | null>(null)
+  const [selectedInbox, setSelectedInbox] = useState<InboxType | null>(null)
+  
+  // Form state
+  const [formData, setFormData] = useState<CreateInboxRequest>({
+    name: "",
+    channel_type: "whatsapp",
+    greeting_message: "",
+    auto_assignment: false,
+  })
 
   // API hooks
-  const { data: apiInboxes, isLoading, isError } = useInboxes()
+  const { data: inboxes, isLoading, isError } = useInboxes()
   const createMutation = useCreateInbox()
   const deleteMutation = useDeleteInbox()
   const disconnectMutation = useDisconnectInbox()
 
-  // Use API data or fallback to mock
-  const connections = useMemo(() => {
-    if (apiInboxes && apiInboxes.length > 0) {
-      return apiInboxes.map(mapAPIInbox)
-    }
-    if (isError || isLoading) {
-      return mockConnections
-    }
-    return []
-  }, [apiInboxes, isLoading, isError])
+  const connectedCount = inboxes?.filter((i) => i.status === "connected").length || 0
+  const disconnectedCount = inboxes?.filter((i) => i.status !== "connected").length || 0
 
-  const connectedCount = connections.filter((c) => c.status === "connected").length
-  const disconnectedCount = connections.filter((c) => c.status !== "connected").length
+  const activeInboxes = inboxes?.filter((i) => i.status === "connected") || []
+  const pendingInboxes = inboxes?.filter((i) => i.status !== "connected") || []
 
-  const activeConnections = connections.filter((c) => c.status === "connected")
-  const pendingConnections = connections.filter((c) => c.status !== "connected")
+  const resetForm = () => {
+    setFormData({
+      name: "",
+      channel_type: "whatsapp",
+      greeting_message: "",
+      auto_assignment: false,
+    })
+  }
 
-  const handleAddInbox = async () => {
-    if (!newInboxName.trim()) return
+  const handleCreateInbox = async () => {
+    if (!formData.name.trim()) return
 
     try {
-      await createMutation.mutateAsync({ name: newInboxName, channel_type: "whatsapp" })
-      setNewInboxName("")
+      await createMutation.mutateAsync(formData)
+      resetForm()
       setIsDialogOpen(false)
     } catch (error) {
       console.error("Failed to create inbox:", error)
@@ -118,9 +110,15 @@ export default function InboxesPage() {
     }
   }
 
-  const handleShowQR = (connection: Connection) => {
-    setSelectedInbox(connection)
+  const handleShowQR = (inbox: InboxType) => {
+    setSelectedInbox(inbox)
     setQrDialogOpen(true)
+  }
+
+  const channelIcons = {
+    whatsapp: <Phone className="h-4 w-4 text-green-500" />,
+    telegram: <Send className="h-4 w-4 text-blue-500" />,
+    api: <Bot className="h-4 w-4 text-gray-500" />,
   }
 
   return (
@@ -130,48 +128,112 @@ export default function InboxesPage() {
         <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
           <div className="flex items-center gap-2 px-4">
             <SidebarTrigger className="-ml-1" />
-            <Separator
-              orientation="vertical"
-              className="mr-2 data-[orientation=vertical]:h-4"
-            />
+            <Separator orientation="vertical" className="mr-2 data-[orientation=vertical]:h-4" />
             <Breadcrumb>
               <BreadcrumbList>
                 <BreadcrumbItem>
-                  <BreadcrumbPage>Conexoes</BreadcrumbPage>
+                  <BreadcrumbPage>Inboxes</BreadcrumbPage>
                 </BreadcrumbItem>
               </BreadcrumbList>
             </Breadcrumb>
           </div>
         </header>
+
         <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-2xl font-bold">Inboxes</h1>
               <p className="text-muted-foreground">Gerencie seus canais de atendimento</p>
             </div>
-            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <Dialog open={isDialogOpen} onOpenChange={(open) => {
+              setIsDialogOpen(open)
+              if (!open) resetForm()
+            }}>
               <DialogTrigger asChild>
                 <Button>
                   <Plus className="mr-2 h-4 w-4" />
                   Novo Inbox
                 </Button>
               </DialogTrigger>
-              <DialogContent>
+              <DialogContent className="sm:max-w-[480px]">
                 <DialogHeader>
-                  <DialogTitle>Novo Inbox WhatsApp</DialogTitle>
+                  <DialogTitle>Criar Novo Inbox</DialogTitle>
                   <DialogDescription>
-                    Crie um novo inbox para conectar seu WhatsApp.
+                    Configure um novo canal de atendimento para sua equipe.
                   </DialogDescription>
                 </DialogHeader>
                 <div className="grid gap-4 py-4">
                   <div className="grid gap-2">
+                    <Label htmlFor="channel_type">Tipo de Canal</Label>
+                    <Select
+                      value={formData.channel_type}
+                      onValueChange={(value: "whatsapp" | "telegram" | "api") => 
+                        setFormData(prev => ({ ...prev, channel_type: value }))
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="whatsapp">
+                          <div className="flex items-center gap-2">
+                            <Phone className="h-4 w-4 text-green-500" />
+                            WhatsApp
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="telegram">
+                          <div className="flex items-center gap-2">
+                            <Send className="h-4 w-4 text-blue-500" />
+                            Telegram
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="api">
+                          <div className="flex items-center gap-2">
+                            <Bot className="h-4 w-4 text-gray-500" />
+                            API
+                          </div>
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="grid gap-2">
                     <Label htmlFor="name">Nome do Inbox</Label>
                     <Input
                       id="name"
-                      value={newInboxName}
-                      onChange={(e) => setNewInboxName(e.target.value)}
+                      value={formData.name}
+                      onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
                       placeholder="Ex: Atendimento Principal"
-                      onKeyDown={(e) => e.key === "Enter" && handleAddInbox()}
+                    />
+                  </div>
+
+                  <div className="grid gap-2">
+                    <Label htmlFor="greeting">Mensagem de Boas-vindas (opcional)</Label>
+                    <Textarea
+                      id="greeting"
+                      value={formData.greeting_message}
+                      onChange={(e) => setFormData(prev => ({ ...prev, greeting_message: e.target.value }))}
+                      placeholder="Ola! Seja bem-vindo ao nosso atendimento..."
+                      rows={3}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Esta mensagem sera enviada automaticamente quando um novo contato iniciar uma conversa.
+                    </p>
+                  </div>
+
+                  <div className="flex items-center justify-between rounded-lg border p-3">
+                    <div className="space-y-0.5">
+                      <Label htmlFor="auto_assignment">Atribuicao automatica</Label>
+                      <p className="text-xs text-muted-foreground">
+                        Distribui conversas automaticamente entre os agentes disponiveis
+                      </p>
+                    </div>
+                    <Switch
+                      id="auto_assignment"
+                      checked={formData.auto_assignment}
+                      onCheckedChange={(checked) => 
+                        setFormData(prev => ({ ...prev, auto_assignment: checked }))
+                      }
                     />
                   </div>
                 </div>
@@ -180,8 +242,8 @@ export default function InboxesPage() {
                     Cancelar
                   </Button>
                   <Button 
-                    onClick={handleAddInbox} 
-                    disabled={createMutation.isPending || !newInboxName.trim()}
+                    onClick={handleCreateInbox} 
+                    disabled={createMutation.isPending || !formData.name.trim()}
                   >
                     {createMutation.isPending && (
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -197,18 +259,18 @@ export default function InboxesPage() {
           <div className="grid gap-4 md:grid-cols-3">
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total</CardTitle>
-                <Link2 className="h-4 w-4 text-muted-foreground" />
+                <CardTitle className="text-sm font-medium">Total de Inboxes</CardTitle>
+                <Inbox className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">
-                  {isLoading ? <Loader2 className="h-6 w-6 animate-spin" /> : connections.length}
+                  {isLoading ? <Loader2 className="h-6 w-6 animate-spin" /> : inboxes?.length || 0}
                 </div>
               </CardContent>
             </Card>
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Conectadas</CardTitle>
+                <CardTitle className="text-sm font-medium">Conectados</CardTitle>
                 <Wifi className="h-4 w-4 text-green-500" />
               </CardHeader>
               <CardContent>
@@ -217,7 +279,7 @@ export default function InboxesPage() {
             </Card>
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Desconectadas</CardTitle>
+                <CardTitle className="text-sm font-medium">Desconectados</CardTitle>
                 <WifiOff className="h-4 w-4 text-red-500" />
               </CardHeader>
               <CardContent>
@@ -229,26 +291,29 @@ export default function InboxesPage() {
           {/* Tabs */}
           <Tabs defaultValue="all" className="flex-1">
             <TabsList>
-              <TabsTrigger value="all">Todas ({connections.length})</TabsTrigger>
-              <TabsTrigger value="active">Ativas ({activeConnections.length})</TabsTrigger>
-              <TabsTrigger value="pending">Pendentes ({pendingConnections.length})</TabsTrigger>
+              <TabsTrigger value="all">Todos ({inboxes?.length || 0})</TabsTrigger>
+              <TabsTrigger value="active">Ativos ({activeInboxes.length})</TabsTrigger>
+              <TabsTrigger value="pending">Pendentes ({pendingInboxes.length})</TabsTrigger>
             </TabsList>
+            
             <TabsContent value="all" className="mt-4">
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {connections.map((connection) => (
-                  <ConnectionCard
-                    key={connection.id}
-                    connection={connection}
-                    onShowQR={() => handleShowQR(connection)}
-                    onDisconnect={() => handleDisconnect(connection.id)}
-                    onDelete={() => handleDeleteInbox(connection.id)}
+                {inboxes?.map((inbox) => (
+                  <InboxCard
+                    key={inbox.id}
+                    inbox={inbox}
+                    onShowQR={() => handleShowQR(inbox)}
+                    onDisconnect={() => handleDisconnect(inbox.id)}
+                    onDelete={() => handleDeleteInbox(inbox.id)}
                     isLoading={deleteMutation.isPending || disconnectMutation.isPending}
                   />
                 ))}
-                {connections.length === 0 && !isLoading && (
-                  <p className="col-span-full text-center text-muted-foreground py-8">
-                    Nenhum inbox. Clique em "Novo Inbox" para comecar.
-                  </p>
+                {(!inboxes || inboxes.length === 0) && !isLoading && (
+                  <div className="col-span-full flex flex-col items-center justify-center py-12 text-muted-foreground">
+                    <Inbox className="h-12 w-12 mb-4" />
+                    <p className="text-lg font-medium">Nenhum inbox configurado</p>
+                    <p className="text-sm">Clique em "Novo Inbox" para comecar</p>
+                  </div>
                 )}
                 {isLoading && (
                   <div className="col-span-full flex justify-center py-8">
@@ -257,38 +322,40 @@ export default function InboxesPage() {
                 )}
               </div>
             </TabsContent>
+
             <TabsContent value="active" className="mt-4">
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {activeConnections.map((connection) => (
-                  <ConnectionCard
-                    key={connection.id}
-                    connection={connection}
-                    onDisconnect={() => handleDisconnect(connection.id)}
-                    onDelete={() => handleDeleteInbox(connection.id)}
+                {activeInboxes.map((inbox) => (
+                  <InboxCard
+                    key={inbox.id}
+                    inbox={inbox}
+                    onDisconnect={() => handleDisconnect(inbox.id)}
+                    onDelete={() => handleDeleteInbox(inbox.id)}
                     isLoading={deleteMutation.isPending || disconnectMutation.isPending}
                   />
                 ))}
-                {activeConnections.length === 0 && (
+                {activeInboxes.length === 0 && (
                   <p className="col-span-full text-center text-muted-foreground py-8">
-                    Nenhum inbox ativo.
+                    Nenhum inbox ativo no momento.
                   </p>
                 )}
               </div>
             </TabsContent>
+
             <TabsContent value="pending" className="mt-4">
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {pendingConnections.map((connection) => (
-                  <ConnectionCard
-                    key={connection.id}
-                    connection={connection}
-                    onShowQR={() => handleShowQR(connection)}
-                    onDelete={() => handleDeleteInbox(connection.id)}
+                {pendingInboxes.map((inbox) => (
+                  <InboxCard
+                    key={inbox.id}
+                    inbox={inbox}
+                    onShowQR={() => handleShowQR(inbox)}
+                    onDelete={() => handleDeleteInbox(inbox.id)}
                     isLoading={deleteMutation.isPending}
                   />
                 ))}
-                {pendingConnections.length === 0 && (
+                {pendingInboxes.length === 0 && (
                   <p className="col-span-full text-center text-muted-foreground py-8">
-                    Nenhum inbox pendente.
+                    Nenhum inbox pendente de conexao.
                   </p>
                 )}
               </div>
@@ -299,8 +366,8 @@ export default function InboxesPage() {
 
       {/* QR Code Dialog */}
       <QRCodeDialog
-        connectionId={selectedInbox?.id || null}
-        connectionName={selectedInbox?.name || ""}
+        inboxId={selectedInbox?.id || null}
+        inboxName={selectedInbox?.name || ""}
         open={qrDialogOpen}
         onOpenChange={setQrDialogOpen}
       />
