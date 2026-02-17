@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo, useCallback, useEffect } from "react"
+import { useState, useMemo, useCallback } from "react"
 import { AppSidebar } from "@/components/layout/app-sidebar"
 import { Button } from "@/components/ui/button"
 import {
@@ -45,13 +45,13 @@ function mapAPIConversation(conv: APIConversation): ChatWithInbox {
     inboxId: conv.inbox_id,
     name: conv.contact?.name || conv.contact?.phone_number || "Unknown",
     avatar: conv.contact?.avatar_url,
-    lastMessage: conv.last_message || "",
+    lastMessage: conv.last_message?.content || "",
     timestamp: conv.last_message_at ? new Date(conv.last_message_at) : new Date(conv.created_at),
     unreadCount: conv.unread_count,
     isOnline: false,
     isGroup: false,
     isFavorite: conv.is_favorite,
-    hasMedia: false,
+    hasMedia: conv.last_message?.content_type !== "text",
     isWaiting: conv.status === "pending",
   }
 }
@@ -336,9 +336,9 @@ export default function ConversationsPage() {
       <AppSidebar />
       <SidebarInset className="flex h-full flex-col overflow-hidden">
         <div className="flex min-h-0 flex-1 rounded-xl border m-2 md:m-4">
-          {/* Chat List */}
+          {/* Chat List - white background for contrast with chat area */}
           <div className={cn(
-            "flex w-full md:w-96 shrink-0 flex-col overflow-hidden md:border-r",
+            "flex w-full md:w-96 shrink-0 flex-col overflow-hidden md:border-r bg-background",
             showChatArea && "hidden md:flex"
           )}>
             {/* Header: Search + Actions */}
@@ -448,6 +448,7 @@ export default function ConversationsPage() {
             )}
           </div>
         </div>
+
       </SidebarInset>
 
       {/* Manage Filters Dialog */}

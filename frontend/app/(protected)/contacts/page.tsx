@@ -56,22 +56,6 @@ const mockContacts: Contact[] = [
     status: "pending",
     tags: ["Lead"],
   },
-  {
-    id: "4",
-    name: "Pedro Oliveira",
-    email: "pedro@example.com",
-    phone: "+55 11 99999-4444",
-    status: "inactive",
-    tags: ["Cliente"],
-  },
-  {
-    id: "5",
-    name: "Carla Mendes",
-    email: "carla@example.com",
-    phone: "+55 11 99999-5555",
-    status: "active",
-    tags: ["Parceiro", "VIP"],
-  },
 ]
 
 export default function ContactsPage() {
@@ -121,40 +105,41 @@ export default function ContactsPage() {
             <Breadcrumb>
               <BreadcrumbList>
                 <BreadcrumbItem>
-                  <BreadcrumbPage>Contacts</BreadcrumbPage>
+                  <BreadcrumbPage>Contatos</BreadcrumbPage>
                 </BreadcrumbItem>
               </BreadcrumbList>
             </Breadcrumb>
           </div>
         </header>
+
         <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold">Contacts</h1>
-              <p className="text-muted-foreground">Manage your contacts and leads</p>
+              <h1 className="text-2xl font-bold">Contatos</h1>
+              <p className="text-muted-foreground">Gerencie seus contatos e leads</p>
             </div>
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogTrigger asChild>
                 <Button>
                   <Plus className="mr-2 h-4 w-4" />
-                  Add Contact
+                  Novo Contato
                 </Button>
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
-                  <DialogTitle>Add New Contact</DialogTitle>
+                  <DialogTitle>Adicionar Contato</DialogTitle>
                   <DialogDescription>
-                    Fill in the details to add a new contact.
+                    Preencha os dados do novo contato.
                   </DialogDescription>
                 </DialogHeader>
                 <div className="grid gap-4 py-4">
                   <div className="grid gap-2">
-                    <Label htmlFor="name">Name</Label>
+                    <Label htmlFor="name">Nome</Label>
                     <Input
                       id="name"
                       value={newContact.name}
                       onChange={(e) => setNewContact({ ...newContact, name: e.target.value })}
-                      placeholder="John Doe"
+                      placeholder="Nome completo"
                     />
                   </div>
                   <div className="grid gap-2">
@@ -164,11 +149,11 @@ export default function ContactsPage() {
                       type="email"
                       value={newContact.email}
                       onChange={(e) => setNewContact({ ...newContact, email: e.target.value })}
-                      placeholder="john@example.com"
+                      placeholder="email@exemplo.com"
                     />
                   </div>
                   <div className="grid gap-2">
-                    <Label htmlFor="phone">Phone</Label>
+                    <Label htmlFor="phone">Telefone</Label>
                     <Input
                       id="phone"
                       value={newContact.phone}
@@ -179,9 +164,9 @@ export default function ContactsPage() {
                 </div>
                 <DialogFooter>
                   <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
-                    Cancel
+                    Cancelar
                   </Button>
-                  <Button onClick={handleAddContact}>Add Contact</Button>
+                  <Button onClick={handleAddContact}>Adicionar</Button>
                 </DialogFooter>
               </DialogContent>
             </Dialog>
@@ -191,7 +176,7 @@ export default function ContactsPage() {
           <div className="grid gap-4 md:grid-cols-3">
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Contacts</CardTitle>
+                <CardTitle className="text-sm font-medium">Total</CardTitle>
                 <Users className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
@@ -200,7 +185,7 @@ export default function ContactsPage() {
             </Card>
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Active</CardTitle>
+                <CardTitle className="text-sm font-medium">Ativos</CardTitle>
                 <div className="h-2 w-2 rounded-full bg-green-500" />
               </CardHeader>
               <CardContent>
@@ -209,7 +194,7 @@ export default function ContactsPage() {
             </Card>
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Pending</CardTitle>
+                <CardTitle className="text-sm font-medium">Pendentes</CardTitle>
                 <div className="h-2 w-2 rounded-full bg-yellow-500" />
               </CardHeader>
               <CardContent>
@@ -225,7 +210,7 @@ export default function ContactsPage() {
                 <div className="relative flex-1">
                   <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                   <Input
-                    placeholder="Search contacts..."
+                    placeholder="Buscar contatos..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="pl-9"

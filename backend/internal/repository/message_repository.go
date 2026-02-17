@@ -92,7 +92,7 @@ func (r *MessageRepository) ListByConversation(ctx context.Context, conversation
 		       COALESCE(content, ''), content_type, COALESCE(content_attributes, '{}'),
 		       COALESCE(source_id, ''), status, private, created_at
 		FROM messages WHERE conversation_id = $1
-		ORDER BY created_at DESC LIMIT $2 OFFSET $3
+		ORDER BY created_at ASC LIMIT $2 OFFSET $3
 	`
 	rows, err := r.db.QueryContext(ctx, query, conversationID, limit, offset)
 	if err != nil {
@@ -143,6 +143,31 @@ func (r *MessageRepository) Count(ctx context.Context, conversationID string) (i
 	var count int
 	err := r.db.QueryRowContext(ctx, query, conversationID).Scan(&count)
 	return count, err
+}
+
+// GetLastByConversation busca a ultima mensagem de uma conversa
+func (r *MessageRepository) GetLastByConversation(ctx context.Context, conversationID string) (*domain.Message, error) {
+	query := `
+		SELECT id, conversation_id, inbox_id, sender_type, sender_id, 
+		       COALESCE(content, ''), content_type, COALESCE(content_attributes, '{}'),
+		       COALESCE(source_id, ''), status, private, created_at
+		FROM messages WHERE conversation_id = $1
+		ORDER BY created_at DESC LIMIT 1
+	`
+	msg := &domain.Message{}
+	var attrsJSON []byte
+	err := r.db.QueryRowContext(ctx, query, conversationID).Scan(
+		&msg.ID, &msg.ConversationID, &msg.InboxID, &msg.SenderType, &msg.SenderID,
+		&msg.Content, &msg.ContentType, &attrsJSON, &msg.SourceID, &msg.Status, &msg.Private, &msg.CreatedAt,
+	)
+	if err == sql.ErrNoRows {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	json.Unmarshal(attrsJSON, &msg.ContentAttributes)
+	return msg, nil
 }
 
 // MessageFilter filtro para busca de mensagens (compatibilidade legado)

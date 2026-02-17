@@ -7,8 +7,9 @@ import {
   GalleryVerticalEnd,
   MessageCircle,
   Users,
-  Link2,
+  Inbox,
   Settings2,
+  LayoutDashboard,
 } from "lucide-react"
 
 import { NavMain } from "@/components/layout/nav-main"
@@ -48,23 +49,28 @@ const data = {
   ],
   navMain: [
     {
-      title: "Conversations",
-      url: "/dashboard/conversations",
+      title: "Conversas",
+      url: "/conversations",
       icon: MessageCircle,
     },
     {
-      title: "Contacts",
-      url: "/dashboard/contacts",
+      title: "Contatos",
+      url: "/contacts",
       icon: Users,
     },
     {
       title: "Inboxes",
-      url: "/dashboard/inboxes",
-      icon: Link2,
+      url: "/inboxes",
+      icon: Inbox,
     },
     {
-      title: "Settings",
-      url: "/dashboard/settings",
+      title: "Dashboard",
+      url: "/dashboard",
+      icon: LayoutDashboard,
+    },
+    {
+      title: "Configuracoes",
+      url: "/settings",
       icon: Settings2,
     },
   ],

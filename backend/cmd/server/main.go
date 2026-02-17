@@ -68,7 +68,7 @@ func main() {
 	// Services
 	inboxService := services.NewInboxService(inboxRepo, waChannelRepo, memberRepo, waManager)
 	contactService := services.NewContactService(contactRepo, contactInboxRepo)
-	conversationService := services.NewConversationService(conversationRepo, contactRepo, labelRepo, inboxRepo)
+	conversationService := services.NewConversationService(conversationRepo, contactRepo, labelRepo, inboxRepo, messageRepo)
 	messageService := services.NewMessageService(messageRepo, conversationRepo, contactRepo, contactInboxRepo, inboxRepo, waManager)
 
 	// Event Handler (conecta canal aos services)

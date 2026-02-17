@@ -356,5 +356,5 @@ CREATE TRIGGER update_saved_filters_updated_at
 -- DEFAULT DATA
 -- ============================================
 INSERT INTO users (name, email, password_hash, role)
-VALUES ('Admin', 'admin@zyntra.com', '$2a$10$rQnH1XnRJQHZFzTYHqYqQOzXsT.T.T.T.T.T.T.T.T.T.T.T', 'admin')
+VALUES ('Admin', 'admin@zyntra.com', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'admin')
 ON CONFLICT (email) DO NOTHING;

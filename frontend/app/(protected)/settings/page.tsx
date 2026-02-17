@@ -61,35 +61,35 @@ export default function SettingsPage() {
             <Breadcrumb>
               <BreadcrumbList>
                 <BreadcrumbItem>
-                  <BreadcrumbPage>Settings</BreadcrumbPage>
+                  <BreadcrumbPage>Configuracoes</BreadcrumbPage>
                 </BreadcrumbItem>
               </BreadcrumbList>
             </Breadcrumb>
           </div>
         </header>
+
         <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
           <div>
-            <h1 className="text-2xl font-bold">Settings</h1>
-            <p className="text-muted-foreground">Manage your account settings and preferences</p>
+            <h1 className="text-2xl font-bold">Configuracoes</h1>
+            <p className="text-muted-foreground">Gerencie sua conta e preferencias</p>
           </div>
 
           <Tabs defaultValue="general" className="flex-1">
             <TabsList>
-              <TabsTrigger value="general">General</TabsTrigger>
-              <TabsTrigger value="account">Account</TabsTrigger>
-              <TabsTrigger value="notifications">Notifications</TabsTrigger>
+              <TabsTrigger value="general">Geral</TabsTrigger>
+              <TabsTrigger value="account">Conta</TabsTrigger>
+              <TabsTrigger value="notifications">Notificacoes</TabsTrigger>
             </TabsList>
 
-            {/* General Settings */}
             <TabsContent value="general" className="mt-4 space-y-4">
               <Card>
                 <CardHeader>
-                  <CardTitle>Appearance</CardTitle>
-                  <CardDescription>Customize how the app looks on your device</CardDescription>
+                  <CardTitle>Aparencia</CardTitle>
+                  <CardDescription>Personalize a aparencia do app</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
-                    <Label>Theme</Label>
+                    <Label>Tema</Label>
                     <div className="flex gap-2">
                       <Button
                         variant={theme === "light" ? "default" : "outline"}
@@ -97,7 +97,7 @@ export default function SettingsPage() {
                         onClick={() => setTheme("light")}
                       >
                         <Sun className="mr-2 h-4 w-4" />
-                        Light
+                        Claro
                       </Button>
                       <Button
                         variant={theme === "dark" ? "default" : "outline"}
@@ -105,7 +105,7 @@ export default function SettingsPage() {
                         onClick={() => setTheme("dark")}
                       >
                         <Moon className="mr-2 h-4 w-4" />
-                        Dark
+                        Escuro
                       </Button>
                       <Button
                         variant={theme === "system" ? "default" : "outline"}
@@ -113,19 +113,19 @@ export default function SettingsPage() {
                         onClick={() => setTheme("system")}
                       >
                         <Monitor className="mr-2 h-4 w-4" />
-                        System
+                        Sistema
                       </Button>
                     </div>
                   </div>
 
                   <div className="grid gap-2">
-                    <Label htmlFor="language">Language</Label>
+                    <Label htmlFor="language">Idioma</Label>
                     <Select
                       value={settings.language}
                       onValueChange={(value) => setSettings({ ...settings, language: value })}
                     >
                       <SelectTrigger id="language">
-                        <SelectValue placeholder="Select language" />
+                        <SelectValue placeholder="Selecione o idioma" />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="pt-BR">Portugues (Brasil)</SelectItem>
@@ -136,13 +136,13 @@ export default function SettingsPage() {
                   </div>
 
                   <div className="grid gap-2">
-                    <Label htmlFor="timezone">Timezone</Label>
+                    <Label htmlFor="timezone">Fuso Horario</Label>
                     <Select
                       value={settings.timezone}
                       onValueChange={(value) => setSettings({ ...settings, timezone: value })}
                     >
                       <SelectTrigger id="timezone">
-                        <SelectValue placeholder="Select timezone" />
+                        <SelectValue placeholder="Selecione o fuso" />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="America/Sao_Paulo">Sao Paulo (GMT-3)</SelectItem>
@@ -153,21 +153,20 @@ export default function SettingsPage() {
                     </Select>
                   </div>
 
-                  <Button>Save Changes</Button>
+                  <Button>Salvar Alteracoes</Button>
                 </CardContent>
               </Card>
             </TabsContent>
 
-            {/* Account Settings */}
             <TabsContent value="account" className="mt-4 space-y-4">
               <Card>
                 <CardHeader>
-                  <CardTitle>Profile</CardTitle>
-                  <CardDescription>Update your personal information</CardDescription>
+                  <CardTitle>Perfil</CardTitle>
+                  <CardDescription>Atualize suas informacoes pessoais</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="grid gap-2">
-                    <Label htmlFor="name">Name</Label>
+                    <Label htmlFor="name">Nome</Label>
                     <Input
                       id="name"
                       value={settings.name}
@@ -185,58 +184,57 @@ export default function SettingsPage() {
                     />
                   </div>
 
-                  <Button>Update Profile</Button>
+                  <Button>Atualizar Perfil</Button>
                 </CardContent>
               </Card>
 
               <Card>
                 <CardHeader>
-                  <CardTitle>Password</CardTitle>
-                  <CardDescription>Change your password</CardDescription>
+                  <CardTitle>Senha</CardTitle>
+                  <CardDescription>Altere sua senha</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="grid gap-2">
-                    <Label htmlFor="current-password">Current Password</Label>
+                    <Label htmlFor="current-password">Senha Atual</Label>
                     <Input id="current-password" type="password" />
                   </div>
 
                   <div className="grid gap-2">
-                    <Label htmlFor="new-password">New Password</Label>
+                    <Label htmlFor="new-password">Nova Senha</Label>
                     <Input id="new-password" type="password" />
                   </div>
 
                   <div className="grid gap-2">
-                    <Label htmlFor="confirm-password">Confirm Password</Label>
+                    <Label htmlFor="confirm-password">Confirmar Senha</Label>
                     <Input id="confirm-password" type="password" />
                   </div>
 
-                  <Button>Change Password</Button>
+                  <Button>Alterar Senha</Button>
                 </CardContent>
               </Card>
 
               <Card className="border-destructive">
                 <CardHeader>
-                  <CardTitle className="text-destructive">Danger Zone</CardTitle>
-                  <CardDescription>Irreversible actions</CardDescription>
+                  <CardTitle className="text-destructive">Zona de Perigo</CardTitle>
+                  <CardDescription>Acoes irreversiveis</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <Button variant="destructive">Delete Account</Button>
+                  <Button variant="destructive">Excluir Conta</Button>
                 </CardContent>
               </Card>
             </TabsContent>
 
-            {/* Notification Settings */}
             <TabsContent value="notifications" className="mt-4 space-y-4">
               <Card>
                 <CardHeader>
-                  <CardTitle>Notification Channels</CardTitle>
-                  <CardDescription>Choose how you want to receive notifications</CardDescription>
+                  <CardTitle>Canais de Notificacao</CardTitle>
+                  <CardDescription>Escolha como receber notificacoes</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="flex items-center justify-between">
                     <div>
-                      <Label>Email Notifications</Label>
-                      <p className="text-sm text-muted-foreground">Receive notifications via email</p>
+                      <Label>Notificacoes por Email</Label>
+                      <p className="text-sm text-muted-foreground">Receber notificacoes via email</p>
                     </div>
                     <Switch
                       checked={settings.notifications.email}
@@ -251,8 +249,8 @@ export default function SettingsPage() {
 
                   <div className="flex items-center justify-between">
                     <div>
-                      <Label>Push Notifications</Label>
-                      <p className="text-sm text-muted-foreground">Receive push notifications in browser</p>
+                      <Label>Notificacoes Push</Label>
+                      <p className="text-sm text-muted-foreground">Receber notificacoes no navegador</p>
                     </div>
                     <Switch
                       checked={settings.notifications.push}
@@ -267,8 +265,8 @@ export default function SettingsPage() {
 
                   <div className="flex items-center justify-between">
                     <div>
-                      <Label>SMS Notifications</Label>
-                      <p className="text-sm text-muted-foreground">Receive notifications via SMS</p>
+                      <Label>Notificacoes SMS</Label>
+                      <p className="text-sm text-muted-foreground">Receber notificacoes via SMS</p>
                     </div>
                     <Switch
                       checked={settings.notifications.sms}
@@ -285,14 +283,14 @@ export default function SettingsPage() {
 
               <Card>
                 <CardHeader>
-                  <CardTitle>Notification Types</CardTitle>
-                  <CardDescription>Choose which events trigger notifications</CardDescription>
+                  <CardTitle>Tipos de Notificacao</CardTitle>
+                  <CardDescription>Escolha quais eventos geram notificacoes</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="flex items-center justify-between">
                     <div>
-                      <Label>New Messages</Label>
-                      <p className="text-sm text-muted-foreground">When you receive a new message</p>
+                      <Label>Novas Mensagens</Label>
+                      <p className="text-sm text-muted-foreground">Quando receber uma nova mensagem</p>
                     </div>
                     <Switch
                       checked={settings.notifications.newMessage}
@@ -307,8 +305,8 @@ export default function SettingsPage() {
 
                   <div className="flex items-center justify-between">
                     <div>
-                      <Label>New Contacts</Label>
-                      <p className="text-sm text-muted-foreground">When a new contact is added</p>
+                      <Label>Novos Contatos</Label>
+                      <p className="text-sm text-muted-foreground">Quando um novo contato for adicionado</p>
                     </div>
                     <Switch
                       checked={settings.notifications.newContact}
@@ -323,8 +321,8 @@ export default function SettingsPage() {
 
                   <div className="flex items-center justify-between">
                     <div>
-                      <Label>Connection Status</Label>
-                      <p className="text-sm text-muted-foreground">When a connection changes status</p>
+                      <Label>Status de Conexao</Label>
+                      <p className="text-sm text-muted-foreground">Quando uma conexao mudar de status</p>
                     </div>
                     <Switch
                       checked={settings.notifications.connectionStatus}
@@ -337,7 +335,7 @@ export default function SettingsPage() {
                     />
                   </div>
 
-                  <Button>Save Preferences</Button>
+                  <Button>Salvar Preferencias</Button>
                 </CardContent>
               </Card>
             </TabsContent>

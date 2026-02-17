@@ -1,12 +1,30 @@
 package whatsapp
 
 import (
+	"strings"
+
 	"go.mau.fi/whatsmeow/types"
 )
 
-// PhoneToJID converte numero de telefone para JID do WhatsApp
-func PhoneToJID(phone string) types.JID {
-	user := phone
+// PhoneToJID converts phone number OR JID/LID string to WhatsApp JID.
+// Handles:
+//   - JID format: "559981769536@s.whatsapp.net" -> parsed directly
+//   - LID format: "131357900538070@lid" -> parsed directly
+//   - Phone format: "+559981769536" or "559981769536" -> converted to JID
+func PhoneToJID(input string) types.JID {
+	// If contains @, it's already a JID or LID - parse directly
+	if strings.Contains(input, "@") {
+		jid, err := types.ParseJID(input)
+		if err == nil {
+			return jid
+		}
+		// Fallback: extract user part before @
+		parts := strings.Split(input, "@")
+		return types.NewJID(parts[0], types.DefaultUserServer)
+	}
+
+	// Phone number format - convert to JID
+	user := input
 	if len(user) > 0 && user[0] == '+' {
 		user = user[1:]
 	}

@@ -2,7 +2,6 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import Link from "next/link"
 import { AppSidebar } from "@/components/layout/app-sidebar"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -10,14 +9,6 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Switch } from "@/components/ui/switch"
 import { Checkbox } from "@/components/ui/checkbox"
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb"
 import { Separator } from "@/components/ui/separator"
 import {
   SidebarInset,
@@ -75,14 +66,12 @@ export default function NewInboxWizardPage() {
   const [currentStep, setCurrentStep] = useState<Step>(1)
   const [selectedChannel, setSelectedChannel] = useState<ChannelType | null>(null)
   
-  // Form data
   const [name, setName] = useState("")
   const [greetingMessage, setGreetingMessage] = useState("")
   const [autoAssignment, setAutoAssignment] = useState(false)
   const [botToken, setBotToken] = useState("")
   const [webhookUrl, setWebhookUrl] = useState("")
   
-  // Agents (mock for now)
   const [selectedAgents, setSelectedAgents] = useState<string[]>([])
   const mockAgents = [
     { id: "1", name: "Voce (Admin)", email: "admin@example.com" },
@@ -112,7 +101,7 @@ export default function NewInboxWizardPage() {
         greeting_message: greetingMessage.trim() || undefined,
         auto_assignment: autoAssignment,
       })
-      router.push("/dashboard/inboxes")
+      router.push("/inboxes")
     } catch (error) {
       console.error("Failed to create inbox:", error)
     }
@@ -120,7 +109,7 @@ export default function NewInboxWizardPage() {
 
   const handleBack = () => {
     if (currentStep === 1) {
-      router.push("/dashboard/inboxes")
+      router.push("/inboxes")
     } else {
       setCurrentStep((prev) => (prev - 1) as Step)
     }
@@ -138,10 +127,13 @@ export default function NewInboxWizardPage() {
     <SidebarProvider>
       <AppSidebar />
       <SidebarInset>
-        <header className="flex h-16 shrink-0 items-center gap-2 border-b">
+        <header className="flex h-16 shrink-0 items-center gap-2 border-b transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
           <div className="flex items-center gap-2 px-4">
             <SidebarTrigger className="-ml-1" />
-            <Separator orientation="vertical" className="mr-2 h-4" />
+            <Separator
+              orientation="vertical"
+              className="mr-2 data-[orientation=vertical]:h-4"
+            />
             <button 
               onClick={handleBack}
               className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
@@ -248,7 +240,6 @@ export default function NewInboxWizardPage() {
                   </p>
                 </div>
 
-                {/* WhatsApp specific */}
                 {selectedChannel === "whatsapp" && (
                   <div className="p-4 rounded-lg bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800">
                     <h3 className="font-medium text-green-800 dark:text-green-200 mb-2">
@@ -280,7 +271,6 @@ export default function NewInboxWizardPage() {
                   </div>
                 )}
 
-                {/* Telegram specific */}
                 {selectedChannel === "telegram" && (
                   <div className="p-4 rounded-lg bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800">
                     <h3 className="font-medium text-blue-800 dark:text-blue-200 mb-2">

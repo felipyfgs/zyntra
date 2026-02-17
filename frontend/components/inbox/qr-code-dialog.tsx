@@ -77,7 +77,7 @@ export function QRCodeDialog({
             <div className="flex flex-col items-center gap-3">
               <div className="bg-white p-4 rounded-lg shadow-sm">
                 <img
-                  src={`data:image/png;base64,${qrCode}`}
+                  src={qrCode}
                   alt="QR Code"
                   className="w-64 h-64"
                 />

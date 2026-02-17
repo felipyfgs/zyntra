@@ -14,6 +14,7 @@ type ConversationService struct {
 	contactRepo      *repository.ContactRepository
 	labelRepo        *repository.LabelRepository
 	inboxRepo        *repository.InboxRepository
+	messageRepo      *repository.MessageRepository
 }
 
 // NewConversationService cria novo servico
@@ -22,12 +23,14 @@ func NewConversationService(
 	contactRepo *repository.ContactRepository,
 	labelRepo *repository.LabelRepository,
 	inboxRepo *repository.InboxRepository,
+	messageRepo *repository.MessageRepository,
 ) *ConversationService {
 	return &ConversationService{
 		conversationRepo: conversationRepo,
 		contactRepo:      contactRepo,
 		labelRepo:        labelRepo,
 		inboxRepo:        inboxRepo,
+		messageRepo:      messageRepo,
 	}
 }
 
@@ -84,6 +87,13 @@ func (s *ConversationService) ListWithDetails(ctx context.Context, filter domain
 		// Buscar contato
 		if contact, _ := s.contactRepo.GetByID(ctx, conv.ContactID); contact != nil {
 			cwd.Contact = contact
+		}
+
+		// Buscar ultima mensagem
+		if s.messageRepo != nil {
+			if msg, _ := s.messageRepo.GetLastByConversation(ctx, conv.ID); msg != nil {
+				cwd.LastMessage = msg
+			}
 		}
 
 		result = append(result, cwd)

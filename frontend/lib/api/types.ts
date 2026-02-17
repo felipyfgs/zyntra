@@ -24,18 +24,18 @@ export interface Conversation {
   inbox_id: string
   contact_id: string
   status: "open" | "pending" | "resolved" | "snoozed"
-  priority: "low" | "medium" | "high" | "urgent"
+  priority?: "low" | "medium" | "high" | "urgent"
   assignee_id?: string
   is_favorite: boolean
   is_archived: boolean
   unread_count: number
-  last_message?: string
   last_message_at?: string
   created_at: string
   updated_at: string
   // Populated fields
   contact?: Contact
   inbox?: Inbox
+  last_message?: Message
 }
 
 export interface ConversationFilter {
